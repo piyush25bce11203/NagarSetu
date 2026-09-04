@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
+import logoSVH from '../images/logoSVH.png';
 import {
   Shield, LogIn, Lock, Mail, Eye, EyeOff, LogOut,
   BarChart3, MapPin, Clock, CheckCircle, AlertCircle,
-  Filter, Search, X, TrendingUp, FileText, RefreshCw, Download, Send
+  Filter, Search, X, TrendingUp, FileText, RefreshCw, Download, Send,
+  Building2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
@@ -57,49 +59,100 @@ function AdminLogin({ onLogin }: { onLogin: (email: string, city: string, name: 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex flex-col items-center justify-center p-6">
-      <motion.div initial={{ opacity:0, y:-20 }} animate={{ opacity:1, y:0 }} className="text-center mb-8">
-        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
-          <Shield className="w-8 h-8 text-white" />
-        </div>
-        <h1 className="text-2xl font-bold text-white">NagarSetu — City Admin</h1>
-        <p className="text-blue-300 text-sm mt-1">admin.nagarsetu.gov.in</p>
-        <p className="text-slate-400 text-xs mt-1">SVH 2026 · Government Portal</p>
-      </motion.div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-0 overflow-hidden">
 
-      <motion.div className="w-full max-w-sm" initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.15 }}>
+      {/* ── Hero top section ──────────────────────────────────────────────── */}
+      <div className="relative w-full flex flex-col items-center pt-12 pb-10 px-6 overflow-hidden">
+        {/* Background blobs */}
+        <div className="absolute top-[-60px] left-[-60px] w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-[-30px] right-[-40px] w-48 h-48 bg-teal-400/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-72 h-24 bg-emerald-600/10 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="relative mb-5"
+        >
+          {/* Glowing ring behind logo */}
+          <div className="absolute inset-0 rounded-full bg-emerald-500/30 blur-xl scale-125 pointer-events-none" />
+          <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-emerald-400/40 shadow-2xl shadow-emerald-900/50">
+            <img src={logoSVH} alt="NagarSetu" className="w-full h-full object-cover" />
+          </div>
+        </motion.div>
+
+        {/* App name */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="text-center"
+        >
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">
+            Nagar<span className="text-emerald-400">Setu</span>
+          </h1>
+          <p className="text-emerald-300/80 text-sm mt-1 font-medium">City Administration Portal</p>
+          <p className="text-slate-500 text-xs mt-1">SVH 2026 · Government of Madhya Pradesh</p>
+        </motion.div>
+
+        {/* City chips */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="flex gap-2 mt-5"
+        >
+          {['Indore', 'Ujjain', 'Bhopal'].map(city => (
+            <span key={city} className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-medium">
+              <Building2 className="w-3 h-3" />{city}
+            </span>
+          ))}
+        </motion.div>
+
+        {/* Thin divider line with shimmer */}
+        <div className="mt-8 w-full max-w-sm h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
+      </div>
+
+      {/* ── Login card ────────────────────────────────────────────────────── */}
+      <motion.div className="w-full max-w-sm px-6 pb-10" initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }}>
         <Card className="p-6 bg-white/5 border-white/10 backdrop-blur-sm shadow-2xl">
-          <h2 className="text-lg font-semibold text-white text-center mb-5">City Administrator Sign In</h2>
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-7 h-7 bg-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Shield className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-base font-semibold text-white">Administrator Sign In</h2>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-1">
               <Label className="text-slate-300 text-sm">Official Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 z-10" />
                 <Input value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="admin.indore@nagarsetu.gov.in"
-                  className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-slate-500 focus-visible:ring-blue-400" />
+                  className="pl-10 bg-white border-white/30 text-slate-900 placeholder:text-slate-400 focus-visible:ring-emerald-400" />
               </div>
             </div>
             <div className="space-y-1">
               <Label className="text-slate-300 text-sm">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 z-10" />
                 <Input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="pl-9 pr-10 bg-white/10 border-white/20 text-white placeholder:text-slate-500 focus-visible:ring-blue-400" />
-                <button type="button" onClick={() => setShowPw(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                  className="pl-10 pr-10 bg-white border-white/30 text-slate-900 placeholder:text-slate-400 focus-visible:ring-emerald-400" />
+                <button type="button" onClick={() => setShowPw(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800">
                   {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
             {error && <motion.p className="text-red-400 text-xs flex items-center gap-1" initial={{ opacity:0 }} animate={{ opacity:1 }}><AlertCircle className="w-3 h-3" />{error}</motion.p>}
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white" disabled={loading}>
+            <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white" disabled={loading}>
               {loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>Signing in...</span>
                        : <span className="flex items-center gap-2"><LogIn className="w-4 h-4"/>Sign In</span>}
             </Button>
           </form>
           <div className="mt-4 p-3 bg-white/5 rounded-lg text-xs text-slate-400 space-y-1">
-            <p className="font-medium text-slate-300">Credentials:</p>
+            <p className="font-medium text-slate-300">Demo credentials:</p>
             <p>admin.indore@nagarsetu.gov.in · admin123</p>
             <p>admin.ujjain@nagarsetu.gov.in · admin123</p>
             <p>admin.bhopal@nagarsetu.gov.in · admin123</p>
@@ -176,8 +229,8 @@ function AdminDashboard({
             <Shield className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-sm leading-none">{adminCity} Admin Portal</p>
-            <p className="text-xs text-slate-400 mt-0.5">admin.nagarsetu.gov.in · {adminName}</p>
+            <p className="font-bold text-sm leading-none" style={{ color: '#6ee7b7' }}>{adminCity} Admin Portal</p>
+            <p className="text-xs mt-0.5" style={{ color: '#cbd5e1' }}>admin.nagarsetu.gov.in · {adminName}</p>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={onLogout} className="text-slate-400 hover:text-white hover:bg-white/10 gap-1.5">
@@ -208,7 +261,7 @@ function AdminDashboard({
         <div className="bg-white rounded-xl border p-4">
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-sm">Department Workload — {adminCity}</h2>
+            <h2 className="font-semibold text-sm text-gray-900">Department Workload — {adminCity}</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {DEPARTMENTS.map(dept => {
@@ -231,7 +284,7 @@ function AdminDashboard({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">All Complaints — {adminCity}</span>
+              <span className="text-sm font-medium text-gray-900">All Complaints — {adminCity}</span>
               <Badge variant="outline" className="text-xs">{filtered.length}</Badge>
             </div>
             <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5 text-xs">
@@ -454,16 +507,6 @@ export function AdminPortal({ allReports, onAssignDept, onClose }: AdminPortalPr
 
   return (
     <div className="min-h-screen bg-background w-full mx-auto relative mobile-container overflow-y-auto">
-      {/* Back button — sits at top of scrollable content */}
-      <div className="sticky top-0 z-[200] flex justify-start px-3 pt-3 pb-1 bg-transparent pointer-events-none">
-        <button
-          onClick={onClose}
-          className="pointer-events-auto flex items-center gap-1.5 text-xs bg-white/95 backdrop-blur border shadow-md rounded-full px-3 py-1.5 text-gray-700 hover:bg-white transition-all"
-        >
-          <X className="w-3 h-3" /> Back to App
-        </button>
-      </div>
-
       {session
         ? <AdminDashboard adminName={session.name} adminCity={session.city} allReports={allReports} onAssignDept={onAssignDept} onLogout={() => setSession(null)} />
         : <AdminLogin onLogin={(email, city, name) => setSession({ email, city, name })} />}

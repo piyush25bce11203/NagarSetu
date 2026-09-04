@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import logoSVH from '../images/logoSVH.png';
+import { MiniMap } from './MiniMap';
 import {
   HardHat, LogIn, Lock, Mail, Eye, EyeOff, LogOut,
-  CheckCircle, AlertCircle, Clock, MapPin, RefreshCw, X, Search, Filter, FileText
+  CheckCircle, AlertCircle, Clock, MapPin, RefreshCw, X, Search, Filter, FileText, Wrench
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
@@ -50,43 +52,97 @@ function StaffLogin({ onLogin }: { onLogin: (email: string, city: string, dept: 
   const deptColors: Record<string, string> = { PWD:'bg-blue-100 text-blue-800', MSWM:'bg-green-100 text-green-800', MVB:'bg-cyan-100 text-cyan-800', USLD:'bg-yellow-100 text-yellow-800' };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-green-950 flex flex-col items-center justify-center p-6">
-      <motion.div initial={{ opacity:0, y:-20 }} animate={{ opacity:1, y:0 }} className="text-center mb-8">
-        <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-500/30">
-          <HardHat className="w-8 h-8 text-white" />
-        </div>
-        <h1 className="text-2xl font-bold text-white">NagarSetu — Department Staff</h1>
-        <p className="text-green-300 text-sm mt-1">staff.nagarsetu.gov.in</p>
-        <p className="text-slate-400 text-xs mt-1">SVH 2026 · Staff Portal</p>
-      </motion.div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-0 overflow-hidden">
 
-      <motion.div className="w-full max-w-sm" initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.15 }}>
+      {/* ── Hero top section ──────────────────────────────────────────────── */}
+      <div className="relative w-full flex flex-col items-center pt-50 pb-10 px-6 overflow-hidden">
+        {/* Background blobs */}
+        <div className="absolute top-[-60px] left-[-40px] w-56 h-56 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-[-20px] right-[-50px] w-48 h-48 bg-emerald-400/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-72 h-20 bg-teal-600/10 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="relative mb-5"
+        >
+          <div className="absolute inset-0 rounded-full bg-teal-500/30 blur-xl scale-125 pointer-events-none" />
+          <div className="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-teal-400/40 shadow-2xl shadow-teal-900/50">
+            <img src={logoSVH} alt="NagarSetu" className="w-full h-full object-cover" />
+          </div>
+          {/* HardHat badge */}
+          <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center border-2 border-slate-900 shadow-lg">
+            <HardHat className="w-4 h-4 text-white" />
+          </div>
+        </motion.div>
+
+        {/* App name */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="text-center"
+        >
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">
+            Nagar<span className="text-teal-400">Setu</span>
+          </h1>
+          <p className="text-teal-300/80 text-sm mt-1 font-medium">Department Staff Portal</p>
+          <p className="text-slate-500 text-xs mt-1">SVH 2026 · Municipal Field Operations</p>
+        </motion.div>
+
+        {/* Department chips */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="flex gap-2 mt-5 flex-wrap justify-center"
+        >
+          {['PWD', 'MSWM', 'MVB', 'USLD'].map(dept => (
+            <span key={dept} className="flex items-center gap-1 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/25 text-teal-300 text-xs font-medium">
+              <Wrench className="w-3 h-3" />{dept}
+            </span>
+          ))}
+        </motion.div>
+
+        {/* Shimmer divider */}
+        <div className="mt-8 w-full max-w-sm h-px bg-gradient-to-r from-transparent via-teal-500/40 to-transparent" />
+      </div>
+
+      {/* ── Login card ────────────────────────────────────────────────────── */}
+      <motion.div className="w-full max-w-sm px-6 pb-10" initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }}>
         <Card className="p-6 bg-white/5 border-white/10 backdrop-blur-sm shadow-2xl">
-          <h2 className="text-lg font-semibold text-white text-center mb-5">Staff Sign In</h2>
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <HardHat className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-base font-semibold text-white">Staff Sign In</h2>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-1">
               <Label className="text-slate-300 text-sm">Staff Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 z-10" />
                 <Input value={email} onChange={e=>setEmail(e.target.value)}
                   placeholder="pwd.indore@nagarsetu.gov.in"
-                  className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-slate-500 focus-visible:ring-green-400" />
+                  className="pl-9 bg-white border-white/30 text-slate-900 placeholder:text-slate-400 focus-visible:ring-teal-400" />
               </div>
             </div>
             <div className="space-y-1">
               <Label className="text-slate-300 text-sm">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 z-10" />
                 <Input type={showPw?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
                   placeholder="staff123"
-                  className="pl-9 pr-10 bg-white/10 border-white/20 text-white placeholder:text-slate-500 focus-visible:ring-green-400" />
-                <button type="button" onClick={()=>setShowPw(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                  className="pl-9 pr-10 bg-white border-white/30 text-slate-900 placeholder:text-slate-400 focus-visible:ring-teal-400" />
+                <button type="button" onClick={()=>setShowPw(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800">
                   {showPw ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
                 </button>
               </div>
             </div>
             {error && <motion.p className="text-red-400 text-xs flex items-center gap-1" initial={{ opacity:0 }} animate={{ opacity:1 }}><AlertCircle className="w-3 h-3"/>{error}</motion.p>}
-            <Button type="submit" className="w-full bg-green-600 hover:bg-green-500 text-white" disabled={loading}>
+            <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-500 text-white" disabled={loading}>
               {loading ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>Signing in...</span>
                        : <span className="flex items-center gap-2"><LogIn className="w-4 h-4"/>Sign In</span>}
             </Button>
@@ -188,8 +244,8 @@ function StaffDashboard({
             <HardHat className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-sm leading-none">{staffDept} — {staffCity}</p>
-            <p className="text-xs text-slate-400 mt-0.5">{deptInfo?.fullName} · {staffName}</p>
+            <p className="font-bold text-sm leading-none" style={{ color: '#5eead4' }}>{staffDept} — {staffCity}</p>
+            <p className="text-xs mt-0.5" style={{ color: '#cbd5e1' }}>{deptInfo?.fullName} · {staffName}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -233,7 +289,7 @@ function StaffDashboard({
             <div className="bg-white rounded-xl border p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium">My Complaints</span>
+                <span className="text-sm font-medium text-gray-900">My Complaints</span>
                 <span className="text-xs text-muted-foreground bg-gray-100 px-2 py-0.5 rounded-full">{filtered.length} shown</span>
               </div>
               <div className="flex gap-2 flex-wrap">
@@ -350,6 +406,26 @@ function StaffDashboard({
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Description</p>
                   <p className="text-sm text-gray-700 leading-relaxed">{detail.description}</p>
                 </div>
+
+                {/* ── Location map ─────────────────────────────────────── */}
+                {detail.coordinates?.lat && detail.coordinates?.lng && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" /> Complaint Location
+                    </p>
+                    <MiniMap
+                      lat={detail.coordinates.lat}
+                      lng={detail.coordinates.lng}
+                      label={detail.ward}
+                      className="w-full h-44"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {detail.coordinates.lat.toFixed(5)}, {detail.coordinates.lng.toFixed(5)}
+                      {detail.street ? ` · ${detail.street}` : ''}
+                    </p>
+                  </div>
+                )}
+
                 {/* status progression */}
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Update Status</p>
@@ -395,20 +471,11 @@ interface StaffPortalProps {
   onClose: () => void;
 }
 
-export function StaffPortal({ allReports, onStatusUpdate, onClose }: StaffPortalProps) {
+export function StaffPortal({ allReports, onStatusUpdate }: StaffPortalProps) {
   const [session, setSession] = useState<{ email: string; city: string; dept: string; name: string } | null>(null);
 
   return (
     <div className="min-h-screen bg-background w-full mx-auto relative mobile-container overflow-y-auto">
-      <div className="sticky top-0 z-[200] flex justify-start px-3 pt-3 pb-1 bg-transparent pointer-events-none">
-        <button
-          onClick={onClose}
-          className="pointer-events-auto flex items-center gap-1.5 text-xs bg-white/95 backdrop-blur border shadow-md rounded-full px-3 py-1.5 text-gray-700 hover:bg-white transition-all"
-        >
-          <X className="w-3 h-3" /> Back to App
-        </button>
-      </div>
-
       {session
         ? <StaffDashboard staffName={session.name} staffCity={session.city} staffDept={session.dept}
             allReports={allReports} onStatusUpdate={onStatusUpdate} onLogout={() => setSession(null)} />
