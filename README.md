@@ -1,13 +1,12 @@
-# NagarSetu — Crowdsourced Civic Issue Reporting System
+# NagarSetu — Civic Issue Reporting System
 
-[![SVH 2026](https://img.shields.io/badge/SVH-2026-orange)](https://svh.gov.in/)
 [![React](https://img.shields.io/badge/React-18.3.1-blue)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.3.5-purple)](https://vitejs.dev/)
 
 A mobile-first civic engagement platform for Madhya Pradesh municipalities. Citizens can report local issues, track resolution, and hold their municipal corporations accountable — in their own language.
 
-Built for **SVH 2026** — currently piloting across **Indore, Ujjain, and Bhopal**.
+The prototype is configured for **Indore, Ujjain, and Bhopal**.
 
 ---
 
@@ -28,6 +27,8 @@ NagarSetu lets citizens photograph and report civic problems (potholes, garbage 
 - **Upvote & comment** on issues to show community support
 - **Interactive map** — Leaflet/OpenStreetMap view with all issue markers
 - **Leaderboard** — earn 100 pts per complaint, 50 bonus pts when resolved
+- **Light and dark mode** — persistent theme preference across the app
+- **Animated transitions** — polished screen changes and loading states
 - **Offline support** — reports saved locally and synced when back online
 
 ### For Admins (City Portal)
@@ -40,6 +41,7 @@ NagarSetu lets citizens photograph and report civic problems (potholes, garbage 
 ### For Staff (Department Portal)
 - Department-scoped complaint queue
 - Update complaint status: Pending → Acknowledged → In Progress → Resolved
+- Upload resolution proof from the gallery or device camera
 
 ---
 
@@ -75,12 +77,13 @@ src/
 │   ├── LeaderboardScreen.tsx      # Points + city rankings
 │   ├── AdminPortal.tsx            # City admin dashboard
 │   ├── StaffPortal.tsx            # Department staff portal
-│   ├── ProfileScreen.tsx          # User profile + language switcher
+│   ├── ProfileScreen.tsx          # User profile + settings
 │   ├── OnboardingScreen.tsx       # City selection + location detect
 │   ├── LoginScreen.tsx            # Citizen login
 │   ├── RegisterScreen.tsx         # New account registration
 │   ├── VoiceRecorder.tsx          # Voice-to-text for report description
 │   ├── translations.ts            # All UI strings in 5 languages
+│   ├── ThemeToggle.tsx            # Persistent light/dark mode control
 │   └── ui/                        # Reusable UI components (40+)
 ├── data/
 │   └── mockReports.ts             # Seed complaints + dept/account config
@@ -156,4 +159,4 @@ Rankings are shown city-wide and can be filtered by city (Indore, Ujjain, Bhopal
 
 ## License
 
-This project was built for SVH 2026. All rights reserved.
+All rights reserved.

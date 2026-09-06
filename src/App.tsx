@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
+import { AnimatePresence, motion } from 'motion/react';
 import { LoadingScreen } from './components/LoadingScreen';
 import { PostLocationLoadingScreen } from './components/PostLocationLoadingScreen';
 import { OnboardingScreen } from './components/OnboardingScreen';
@@ -18,6 +19,7 @@ import { StaffPortal } from './components/StaffPortal';
 import { BottomNavigation } from './components/BottomNavigation';
 import DesktopMobileNotice from './components/DesktopMobileNotice';
 import SVHBackground from './components/SVHBackground';
+import { ThemeToggle } from './components/ThemeToggle';
 import { translations, Language, getT } from './components/translations';
 import { allCityReports } from './data/mockReports';
 import { UserStore, SessionStore, ReportStore } from './lib/storage';
@@ -40,16 +42,66 @@ export type Screen = 'onboarding' | 'home' | 'report' | 'map' | 'profile' | 'ana
 type AuthScreen = 'login' | 'register';
 type PortalMode = 'none' | 'admin' | 'staff';
 
+// ── Screen order for slide direction ──────────────────────────────────────────
+const SCREEN_ORDER: Screen[] = ['home', 'analytics', 'report', 'leaderboard', 'profile'];
+
+function getDirection(from: Screen, to: Screen): 1 | -1 {
+  const fi = SCREEN_ORDER.indexOf(from);
+  const ti = SCREEN_ORDER.indexOf(to);
+  if (fi === -1 || ti === -1) return 1;
+  return ti > fi ? 1 : -1;
+}
+
+// ── Animated screen wrapper ───────────────────────────────────────────────────
+function ScreenTransition({
+  screenKey,
+  direction,
+  children,
+}: {
+  screenKey: string;
+  direction: 1 | -1;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      key={screenKey}
+      initial={{ opacity: 0, x: direction * 28, y: 8, scale: 0.985, filter: 'blur(4px)' }}
+      animate={{ opacity: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)' }}
+      exit={{    opacity: 0, x: direction * -28, y: -6, scale: 0.985, filter: 'blur(4px)' }}
+      transition={{
+        duration:   0.42,
+        delay:      0.04,
+        ease:       [0.32, 0, 0.18, 1], // smooth iOS-like curve
+        opacity:    { duration: 0.25 },
+        scale:      { duration: 0.35 },
+      }}
+      style={{ willChange: 'transform, opacity' }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export default function App() {
   const [isLoading, setIsLoading]                         = useState(true);
   const [isPostLocationLoading, setIsPostLocationLoading] = useState(false);
   const [currentScreen, setCurrentScreen]                 = useState<Screen>('onboarding');
+  const [prevScreen, setPrevScreen]                       = useState<Screen>('home');
   const [authScreen, setAuthScreen]                       = useState<AuthScreen>('login');
   const [isAuthenticated, setIsAuthenticated]             = useState(false);
   const [portalMode, setPortalMode]                       = useState<PortalMode>('none');
   const [loginError, setLoginError]                       = useState('');
   const [registerError, setRegisterError]                 = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('nagarsetu-theme') === 'dark';
+  });
 
+  // Wrap screen change so we always track direction
+  const navigateTo = useCallback((screen: Screen) => {
+    setPrevScreen(currentScreen);
+    setCurrentScreen(screen);
+  }, [currentScreen]);
   const [user, setUser] = useState<User>({
     id: '', name: '', email: '',
     district: 'Indore',
@@ -83,6 +135,15 @@ export default function App() {
     const t = setTimeout(() => setIsLoading(false), 2500);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    localStorage.setItem('nagarsetu-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  const themeToggle = (
+    <ThemeToggle isDarkMode={isDarkMode} onToggle={() => setIsDarkMode(prev => !prev)} />
+  );
 
   const persistAndSet = useCallback((updated: Report[]) => {
     ReportStore.save(updated);
@@ -129,7 +190,9 @@ export default function App() {
     setIsAuthenticated(false);
     setHasCompletedOnboarding(false);
     setCurrentScreen('onboarding');
-    setUser({ id: '', name: '', email: '', district: 'Indore', coordinates: { lat: 22.7196, lng: 75.8577 }, language: 'english', isOnline: true });    setAuthScreen('login');
+    setPrevScreen('home');
+    setUser({ id: '', name: '', email: '', district: 'Indore', coordinates: { lat: 22.7196, lng: 75.8577 }, language: 'english', isOnline: true });
+    setAuthScreen('login');
     setLoginError('');
   };
 
@@ -166,7 +229,7 @@ export default function App() {
     } else {
       toast.info(getT(user.language).savedOffline);
     }
-    setCurrentScreen('home');
+    navigateTo('home');
   };
 
   const handleUpvote = (reportId: string) => {
@@ -191,8 +254,18 @@ export default function App() {
     setReports(updated);
   };
 
+  const handleSetDeadline = (reportId: string, deadline: string) => {
+    const updated = ReportStore.update(reportId, { deadline });
+    setReports(updated);
+  };
+
   const handleStaffStatusUpdate = (reportId: string, status: Report['status']) => {
     const updated = ReportStore.update(reportId, { status });
+    setReports(updated);
+  };
+
+  const handleStaffResolveWithProof = (reportId: string, proofUrl: string) => {
+    const updated = ReportStore.update(reportId, { status: 'resolved', resolutionProofUrl: proofUrl });
     setReports(updated);
   };
 
@@ -210,7 +283,17 @@ export default function App() {
   };
 
   const getDeptName = (type: string) => {
-    const m: Record<string, string> = { road:'PWD', garbage:'MSWM', streetlight:'USLD', water:'MVB', drainage:'MSWM' };
+    const m: Record<string, string> = {
+      road:        'PWD',
+      garbage:     'MSWM',
+      streetlight: 'USLD',
+      water:       'MVB',
+      drainage:    'DRAIN',
+      electricity: 'ELECT',
+      fire:        'FIRE',
+      sewage:      'SEWAGE',
+      animal:      'ANIMAL',
+    };
     return m[type.toLowerCase()] ?? 'Municipal Corporation';
   };
 
@@ -219,7 +302,25 @@ export default function App() {
     return (
       <>
         <SVHBackground />
-        <AdminPortal allReports={reports} onAssignDept={handleAssignDept} onClose={() => setPortalMode('none')} />
+        <div className="min-h-screen bg-background w-full mx-auto relative mobile-container overflow-y-auto">
+          {themeToggle}
+          {/* Back button — lives inside the mobile container, sticky at top */}
+          <motion.button
+            onClick={() => setPortalMode('none')}
+            className="sticky top-5 left-3 z-[9999] flex items-center gap-1.5 text-xs bg-white/95 backdrop-blur border shadow-md rounded-full px-3 py-1.5 text-gray-700 hover:bg-white active:scale-95 transition-all ml-3 mt-5"
+            style={{ width: 'fit-content' }}
+            initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }}
+            whileTap={{ scale: 0.92 }}
+          >
+            ← Back to App
+          </motion.button>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.38, delay: 0.08, ease: [0.32, 0, 0.18, 1] }}
+          >
+            <AdminPortal allReports={reports} onAssignDept={handleAssignDept} onSetDeadline={handleSetDeadline} onClose={() => setPortalMode('none')} />
+          </motion.div>
+        </div>
       </>
     );
   }
@@ -228,34 +329,63 @@ export default function App() {
     return (
       <>
         <SVHBackground />
-        <StaffPortal allReports={reports} onStatusUpdate={handleStaffStatusUpdate} onClose={() => setPortalMode('none')} />
+        <div className="min-h-screen bg-background w-full mx-auto relative mobile-container overflow-y-auto">
+          {themeToggle}
+          {/* Back button — lives inside the mobile container, sticky at top */}
+          <motion.button
+            onClick={() => setPortalMode('none')}
+            className="sticky top-5 left-3 z-[9999] flex items-center gap-1.5 text-xs bg-white/95 backdrop-blur border shadow-md rounded-full px-3 py-1.5 text-gray-700 hover:bg-white active:scale-95 transition-all ml-3 mt-5"
+            style={{ width: 'fit-content' }}
+            initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }}
+            whileTap={{ scale: 0.92 }}
+          >
+            ← Back to App
+          </motion.button>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.38, delay: 0.08, ease: [0.32, 0, 0.18, 1] }}
+          >
+            <StaffPortal allReports={reports} onStatusUpdate={handleStaffStatusUpdate} onResolveWithProof={handleStaffResolveWithProof} onClose={() => setPortalMode('none')} />
+          </motion.div>
+        </div>
       </>
     );
   }
 
-  if (isLoading) return (<><SVHBackground /><LoadingScreen /></>);
-  if (isPostLocationLoading) return (<><SVHBackground /><PostLocationLoadingScreen detectedLocation={user.district} /></>);
+  if (isLoading) return (<><SVHBackground />{themeToggle}<LoadingScreen /></>);
+  if (isPostLocationLoading) return (<><SVHBackground />{themeToggle}<PostLocationLoadingScreen detectedLocation={user.district} /></>);
 
   if (!isAuthenticated) {
     return (
       <>
         <SVHBackground />
-        <div className="min-h-screen bg-background w-full mx-auto relative mobile-container">
-          {authScreen === 'login' ? (
-            <LoginScreen
-              onLogin={handleLogin}
-              onGoToRegister={() => { setAuthScreen('register'); setLoginError(''); }}
-              onOpenAdmin={() => setPortalMode('admin')}
-              onOpenStaff={() => setPortalMode('staff')}
-              error={loginError}
-            />
-          ) : (
-            <RegisterScreen
-              onRegister={handleRegister}
-              onGoToLogin={() => { setAuthScreen('login'); setRegisterError(''); }}
-              error={registerError}
-            />
-          )}
+        <div className="min-h-screen bg-background w-full mx-auto relative mobile-container overflow-hidden">
+          {themeToggle}
+          <AnimatePresence mode="wait" initial={false}>
+            {authScreen === 'login' ? (
+              <motion.div key="login"
+                initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.32, delay: 0.06, ease: [0.32, 0, 0.18, 1] }}>
+                <LoginScreen
+                  onLogin={handleLogin}
+                  onGoToRegister={() => { setAuthScreen('register'); setLoginError(''); }}
+                  onOpenAdmin={() => setPortalMode('admin')}
+                  onOpenStaff={() => setPortalMode('staff')}
+                  error={loginError}
+                />
+              </motion.div>
+            ) : (
+              <motion.div key="register"
+                initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }}
+                transition={{ duration: 0.32, delay: 0.06, ease: [0.32, 0, 0.18, 1] }}>
+                <RegisterScreen
+                  onRegister={handleRegister}
+                  onGoToLogin={() => { setAuthScreen('login'); setRegisterError(''); }}
+                  error={registerError}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
           <Toaster />
         </div>
       </>
@@ -267,6 +397,7 @@ export default function App() {
       <>
         <SVHBackground />
         <div className="min-h-screen bg-background w-full mx-auto relative mobile-container">
+          {themeToggle}
           <OnboardingScreen onComplete={handleCompleteOnboarding} currentLanguage={user.language} onLanguageChange={handleLanguageChange} />
           <Toaster />
         </div>
@@ -276,23 +407,57 @@ export default function App() {
 
   const districtReports = reports.filter(r => r.district === user.district);
   const myReports       = reports.filter(r => r.userId === (user.id || user.email || 'guest'));
+  const direction       = getDirection(prevScreen, currentScreen);
 
   return (
     <>
       <SVHBackground />
-      <div className="min-h-screen bg-background w-full mx-auto relative mobile-container">
+      <div className="min-h-screen bg-background w-full mx-auto relative mobile-container overflow-hidden">
+        {themeToggle}
         <DesktopMobileNotice />
         {currentScreen !== 'map' && (
           <div className="pb-20">
-            {currentScreen === 'home'        && <HomeScreen reports={districtReports} user={user} onReportSelect={setSelectedReport} onUpvote={handleUpvote} onAddComment={handleAddComment} selectedReport={selectedReport} onCloseModal={() => setSelectedReport(null)} onReportAgain={() => setCurrentScreen('report')} />}
-            {currentScreen === 'analytics'   && <AnalyticsScreen reports={districtReports} user={user} />}
-            {currentScreen === 'leaderboard' && <LeaderboardScreen reports={reports} user={user} />}
-            {currentScreen === 'report'      && <ReportScreen user={user} onSubmit={handleAddReport} onCancel={() => setCurrentScreen('home')} />}
-            {currentScreen === 'profile'     && <ProfileScreen reports={myReports} user={user} onLanguageChange={handleLanguageChange} onToggleOnline={handleToggleOnline} onReportAgain={() => setCurrentScreen('report')} onOpenAdmin={() => setPortalMode('admin')} onLogout={handleLogout} />}
+            <AnimatePresence mode="wait" initial={false}>
+              {currentScreen === 'home' && (
+                <ScreenTransition screenKey="home" direction={direction}>
+                  <HomeScreen reports={districtReports} user={user} onReportSelect={setSelectedReport} onUpvote={handleUpvote} onAddComment={handleAddComment} selectedReport={selectedReport} onCloseModal={() => setSelectedReport(null)} onReportAgain={() => navigateTo('report')} />
+                </ScreenTransition>
+              )}
+              {currentScreen === 'analytics' && (
+                <ScreenTransition screenKey="analytics" direction={direction}>
+                  <AnalyticsScreen reports={districtReports} user={user} />
+                </ScreenTransition>
+              )}
+              {currentScreen === 'leaderboard' && (
+                <ScreenTransition screenKey="leaderboard" direction={direction}>
+                  <LeaderboardScreen reports={reports} user={user} />
+                </ScreenTransition>
+              )}
+              {currentScreen === 'report' && (
+                <ScreenTransition screenKey="report" direction={direction}>
+                  <ReportScreen user={user} onSubmit={handleAddReport} onCancel={() => navigateTo('home')} />
+                </ScreenTransition>
+              )}
+              {currentScreen === 'profile' && (
+                <ScreenTransition screenKey="profile" direction={direction}>
+                  <ProfileScreen reports={myReports} user={user} onLanguageChange={handleLanguageChange} onToggleOnline={handleToggleOnline} onReportAgain={() => navigateTo('report')} onOpenAdmin={() => setPortalMode('admin')} onLogout={handleLogout} />
+                </ScreenTransition>
+              )}
+            </AnimatePresence>
           </div>
         )}
-        {currentScreen === 'map' && <LeafletMapScreen reports={districtReports} user={user} onReportSelect={setSelectedReport} onUpvote={handleUpvote} />}
-        <BottomNavigation currentScreen={currentScreen} onScreenChange={setCurrentScreen} language={user.language} />
+        {currentScreen === 'map' && (
+          <motion.div
+            key="map"
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.3, delay: 0.08 }}
+          >
+            <LeafletMapScreen reports={districtReports} user={user} onReportSelect={setSelectedReport} onUpvote={handleUpvote} />
+          </motion.div>
+        )}
+        <BottomNavigation currentScreen={currentScreen} onScreenChange={navigateTo} language={user.language} />
         <Toaster />
       </div>
     </>

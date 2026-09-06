@@ -1,12 +1,23 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Users, Loader } from 'lucide-react';
+import { Heart, Users } from 'lucide-react';
 
 export function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex flex-col items-center justify-center p-6">
+    <div className="loading-screen min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex flex-col items-center justify-center p-6">
+      <div className="loading-water-drops" aria-hidden="true">
+        {[0, 1, 2, 3, 4, 5].map(index => (
+          <motion.span
+            key={index}
+            className="loading-water-drop"
+            style={{ left: `${14 + index * 15}%` }}
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: ['0%', '190px'], opacity: [0, 0.7, 0] }}
+            transition={{ duration: 2.6, delay: index * 0.38, repeat: Infinity, ease: 'easeIn' }}
+          />
+        ))}
+      </div>
       <motion.div 
-        className="text-center"
+        className="relative z-10 text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
@@ -31,13 +42,21 @@ export function LoadingScreen() {
         </motion.div>
 
         {/* Circular Loader */}
-        <motion.div 
-          className="w-12 h-12 mx-auto mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.8 }}
+        <motion.div
+          className="loading-signal mx-auto mb-8"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          aria-hidden="true"
         >
-          <Loader className="w-8 h-8 text-green-600 animate-spin" />
+          {[0, 1, 2, 3, 4].map(index => (
+            <motion.span
+              key={index}
+              className="loading-signal-bar"
+              animate={{ height: [8, 24, 12, 8], opacity: [0.35, 1, 0.55, 0.35] }}
+              transition={{ duration: 1.4, delay: index * 0.12, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          ))}
         </motion.div>
 
         {/* App Name */}

@@ -4,7 +4,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card } from './ui/card';
 import { Separator } from './ui/separator';
-import { Eye, EyeOff, Mail, Lock, LogIn, Shield } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Shield } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface LoginScreenProps {
@@ -51,10 +51,10 @@ export function LoginScreen({ onLogin, onGoToRegister, onOpenAdmin, onOpenStaff,
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 flex flex-col items-center justify-center p-6">
+    <div className="auth-shell min-h-screen bg-gradient-to-br from-green-50 to-teal-50 flex flex-col items-center justify-center p-6">
       {/* Logo & branding */}
       <motion.div
-        className="text-center mb-8"
+        className="auth-brand text-center mb-8"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -67,7 +67,6 @@ export function LoginScreen({ onLogin, onGoToRegister, onOpenAdmin, onOpenStaff,
           />
         </div>
         <h1 className="text-3xl font-bold text-primary">NagarSetu</h1>
-        <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">SVH 2026</p>
         <p className="text-sm text-muted-foreground mt-2">Digital Civic Reporting Platform</p>
       </motion.div>
 
@@ -78,7 +77,7 @@ export function LoginScreen({ onLogin, onGoToRegister, onOpenAdmin, onOpenStaff,
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.15 }}
       >
-        <Card className="p-6 shadow-lg">
+        <Card className="auth-card p-6 shadow-lg">
           <h2 className="text-xl font-semibold text-center mb-6">Sign In</h2>
 
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
@@ -96,18 +95,15 @@ export function LoginScreen({ onLogin, onGoToRegister, onOpenAdmin, onOpenStaff,
             {/* Email */}
             <div className="space-y-1">
               <Label htmlFor="email">Email address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className={`pl-9 ${localErrors.email ? 'border-red-500 focus-visible:ring-red-400' : ''}`}
-                />
-              </div>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className={localErrors.email ? 'border-red-500 focus-visible:ring-red-400' : ''}
+              />
               {localErrors.email && (
                 <p className="text-xs text-red-500">{localErrors.email}</p>
               )}
@@ -117,7 +113,6 @@ export function LoginScreen({ onLogin, onGoToRegister, onOpenAdmin, onOpenStaff,
             <div className="space-y-1">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -125,7 +120,7 @@ export function LoginScreen({ onLogin, onGoToRegister, onOpenAdmin, onOpenStaff,
                   autoComplete="current-password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className={`pl-9 pr-10 ${localErrors.password ? 'border-red-500 focus-visible:ring-red-400' : ''}`}
+                  className={`pr-10 ${localErrors.password ? 'border-red-500 focus-visible:ring-red-400' : ''}`}
                 />
                 <button
                   type="button"
@@ -176,7 +171,7 @@ export function LoginScreen({ onLogin, onGoToRegister, onOpenAdmin, onOpenStaff,
           <button
             type="button"
             onClick={onOpenAdmin}
-            className="w-full flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg py-2.5 transition-all"
+            className="auth-portal-link w-full flex items-center justify-center gap-2 text-xs text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg py-2.5 transition-all"
           >
             <Shield className="w-3.5 h-3.5" />
             City Admin Portal
@@ -187,7 +182,7 @@ export function LoginScreen({ onLogin, onGoToRegister, onOpenAdmin, onOpenStaff,
           <button
             type="button"
             onClick={onOpenStaff}
-            className="w-full flex items-center justify-center gap-2 text-xs text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg py-2.5 transition-all mt-2"
+            className="auth-portal-link w-full flex items-center justify-center gap-2 text-xs text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg py-2.5 transition-all mt-2"
           >
             <Shield className="w-3.5 h-3.5" />
             Department Staff Portal
@@ -198,7 +193,7 @@ export function LoginScreen({ onLogin, onGoToRegister, onOpenAdmin, onOpenStaff,
 
       {/* Footer */}
       <p className="mt-8 text-xs text-muted-foreground text-center">
-        NagarSetu · SVH 2026
+        NagarSetu
       </p>
     </div>
   );

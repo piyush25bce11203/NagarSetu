@@ -13,8 +13,8 @@ const SVHBackground: React.FC = () => {
   ];
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 hidden md:block">
-      {/* NagarSetu / SVH 2026 Branding */}
+    <div className="svh-background fixed inset-0 pointer-events-none z-0 hidden md:block">
+      {/* NagarSetu branding */}
       <motion.div 
         className="absolute top-10 left-10 text-white/20"
         initial={{ opacity: 0, x: -50 }}
@@ -23,7 +23,6 @@ const SVHBackground: React.FC = () => {
       >
         <div className="text-3xl font-semibold">INNOVATION </div>
         <div className="text-2xl font-semibold">FOR NATION</div>
-        <div className="text-sm uppercase tracking-wide mt-2 opacity-70">SVH 2026</div>
       </motion.div>
 
       {/* Floating Icons */}

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Brain, MapPin, Mic, Building2, BarChart3, Shield } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Card } from './ui/card';
@@ -8,7 +7,7 @@ interface TechShowcaseProps {
   language: string;
 }
 
-export function TechShowcase({ language }: TechShowcaseProps) {
+export function TechShowcase(_props: TechShowcaseProps) {
   const features = [
     {
       icon: Brain,
@@ -59,7 +58,7 @@ export function TechShowcase({ language }: TechShowcaseProps) {
       <div className="text-center mb-6">
         <h2 className="text-xl font-bold text-primary mb-2">Technology Features</h2>
         <p className="text-sm text-muted-foreground">
-          Powered by AI and Smart City Technologies — NagarSetu · SVH 2026
+          Powered by AI and Smart City Technologies — NagarSetu
         </p>
       </div>
 
@@ -88,7 +87,7 @@ export function TechShowcase({ language }: TechShowcaseProps) {
 
       <div className="text-center pt-4">
         <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-purple-50">
-          Powered by NagarSetu · SVH 2026
+          Powered by NagarSetu
         </Badge>
       </div>
     </div>

@@ -4,7 +4,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card } from './ui/card';
 import { Separator } from './ui/separator';
-import { Eye, EyeOff, Mail, Lock, User, Phone, UserPlus, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export interface RegisterData {
@@ -102,7 +102,6 @@ export function RegisterScreen({ onRegister, onGoToLogin, error }: RegisterScree
           />
         </div>
         <h1 className="text-2xl font-bold text-primary">NagarSetu</h1>
-        <p className="text-xs text-muted-foreground uppercase tracking-widest mt-0.5">SVH 2026</p>
       </motion.div>
 
       {/* Register card */}
@@ -129,55 +128,46 @@ export function RegisterScreen({ onRegister, onGoToLogin, error }: RegisterScree
             {/* Full name */}
             <div className="space-y-1">
               <Label htmlFor="reg-name">Full Name</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="reg-name"
-                  type="text"
-                  placeholder="Ramesh Kumar"
-                  autoComplete="name"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className={`pl-9 ${errors.name ? 'border-red-500 focus-visible:ring-red-400' : ''}`}
-                />
-              </div>
+              <Input
+                id="reg-name"
+                type="text"
+                placeholder="Ramesh Kumar"
+                autoComplete="name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className={errors.name ? 'border-red-500 focus-visible:ring-red-400' : ''}
+              />
               {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
             </div>
 
             {/* Email */}
             <div className="space-y-1">
               <Label htmlFor="reg-email">Email address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="reg-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className={`pl-9 ${errors.email ? 'border-red-500 focus-visible:ring-red-400' : ''}`}
-                />
-              </div>
+              <Input
+                id="reg-email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className={errors.email ? 'border-red-500 focus-visible:ring-red-400' : ''}
+              />
               {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
             </div>
 
             {/* Phone */}
             <div className="space-y-1">
               <Label htmlFor="reg-phone">Mobile Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="reg-phone"
-                  type="tel"
-                  placeholder="9876543210"
-                  autoComplete="tel"
-                  maxLength={10}
-                  value={phone}
-                  onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-                  className={`pl-9 ${errors.phone ? 'border-red-500 focus-visible:ring-red-400' : ''}`}
-                />
-              </div>
+              <Input
+                id="reg-phone"
+                type="tel"
+                placeholder="9876543210"
+                autoComplete="tel"
+                maxLength={10}
+                value={phone}
+                onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+                className={errors.phone ? 'border-red-500 focus-visible:ring-red-400' : ''}
+              />
               {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
             </div>
 
@@ -185,7 +175,6 @@ export function RegisterScreen({ onRegister, onGoToLogin, error }: RegisterScree
             <div className="space-y-1">
               <Label htmlFor="reg-password">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="reg-password"
                   type={showPassword ? 'text' : 'password'}
@@ -193,7 +182,7 @@ export function RegisterScreen({ onRegister, onGoToLogin, error }: RegisterScree
                   autoComplete="new-password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className={`pl-9 pr-10 ${errors.password ? 'border-red-500 focus-visible:ring-red-400' : ''}`}
+                  className={`pr-10 ${errors.password ? 'border-red-500 focus-visible:ring-red-400' : ''}`}
                 />
                 <button
                   type="button"
@@ -211,7 +200,6 @@ export function RegisterScreen({ onRegister, onGoToLogin, error }: RegisterScree
             <div className="space-y-1">
               <Label htmlFor="reg-confirm">Confirm Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="reg-confirm"
                   type={showConfirm ? 'text' : 'password'}
@@ -219,7 +207,7 @@ export function RegisterScreen({ onRegister, onGoToLogin, error }: RegisterScree
                   autoComplete="new-password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  className={`pl-9 pr-10 ${errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-400' : ''}`}
+                  className={`pr-10 ${errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-400' : ''}`}
                 />
                 <button
                   type="button"
@@ -266,7 +254,7 @@ export function RegisterScreen({ onRegister, onGoToLogin, error }: RegisterScree
 
       {/* Footer */}
       <p className="mt-6 text-xs text-muted-foreground text-center">
-        NagarSetu · SVH 2026
+        NagarSetu
       </p>
     </div>
   );

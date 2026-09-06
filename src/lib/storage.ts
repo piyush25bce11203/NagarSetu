@@ -6,7 +6,7 @@ import { Report } from '../types';
 
 const KEYS = {
   USERS:   'nagarsetu_users',
-  REPORTS: 'nagarsetu_reports_v3',
+  REPORTS: 'nagarsetu_reports_v4',
   SESSION: 'nagarsetu_session',
 } as const;
 

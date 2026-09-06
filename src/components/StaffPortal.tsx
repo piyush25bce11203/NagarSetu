@@ -1,16 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import logoSVH from '../images/logoSVH.png';
 import { MiniMap } from './MiniMap';
 import {
-  HardHat, LogIn, Lock, Mail, Eye, EyeOff, LogOut,
-  CheckCircle, AlertCircle, Clock, MapPin, RefreshCw, X, Search, Filter, FileText, Wrench
+  HardHat, LogIn, Eye, EyeOff, LogOut,
+  CheckCircle, AlertCircle, Clock, MapPin, RefreshCw, X, Search, Filter, FileText, Wrench,
+  Trophy, Crown, Medal, Award, Star, Timer, ImagePlus, Camera, Upload
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card } from './ui/card';
-import { STAFF_ACCOUNTS, DEPARTMENTS } from '../data/mockReports';
+import { STAFF_ACCOUNTS, DEPARTMENTS, CITY_LIST } from '../data/mockReports';
 import type { Report } from '../App';
 
 const statusConfig: Record<Report['status'], { label: string; color: string; dot: string }> = {
@@ -25,8 +26,88 @@ function fmt(ts: Date) {
   return m < 60 ? `${m}m ago` : h < 24 ? `${h}h ago` : `${dy}d ago`;
 }
 
+// ── Staff City Ranking ────────────────────────────────────────────────────────
+function StaffCityRanking({ allReports, myCity }: { allReports: Report[]; myCity: string }) {
+  const cityStats = useMemo(() => {
+    return CITY_LIST.map(city => {
+      const cityR    = allReports.filter(r => r.district === city);
+      const total    = cityR.length;
+      const resolved = cityR.filter(r => r.status === 'resolved').length;
+      const overdue  = cityR.filter(r => r.deadline && new Date(r.deadline) < new Date() && r.status !== 'resolved').length;
+      const score    = total > 0 ? Math.max(0, Math.round((resolved / total) * 100) - overdue * 5) : 0;
+      return { city, total, resolved, overdue, score };
+    }).sort((a, b) => b.score - a.score);
+  }, [allReports]);
+
+  const medals      = [Crown, Medal, Award];
+  const medalColors = ['text-yellow-500', 'text-gray-400', 'text-amber-600'];
+  const bgColors    = ['bg-yellow-50 border-yellow-200', 'bg-gray-50 border-gray-200', 'bg-amber-50 border-amber-200'];
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-xl p-4 text-white">
+        <div className="flex items-center gap-2 mb-1">
+          <Trophy className="w-5 h-5 text-yellow-300" />
+          <h2 className="font-bold text-base">City Ranking</h2>
+        </div>
+        <p className="text-xs text-white/80">Score = (Resolved ÷ Total) × 100 − (Overdue × 5 pts)</p>
+      </div>
+
+      {cityStats.map((s, i) => {
+        const MedalIcon = medals[i] || Star;
+        const isMyCity  = s.city === myCity;
+        return (
+          <motion.div key={s.city}
+            className={`rounded-xl border p-4 ${bgColors[i] || 'bg-white border-gray-200'} ${isMyCity ? 'ring-2 ring-teal-500' : ''}`}
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <MedalIcon className={`w-5 h-5 ${medalColors[i] || 'text-slate-400'}`} />
+                <span className="font-bold text-gray-900 text-base">
+                  #{i + 1} {s.city}
+                  {isMyCity && <span className="ml-1.5 text-xs font-semibold text-teal-600 bg-teal-100 px-2 py-0.5 rounded-full">Your City</span>}
+                </span>
+              </div>
+              <div className="text-right">
+                <p className={`text-2xl font-bold ${i === 0 ? 'text-yellow-600' : i === 1 ? 'text-gray-600' : 'text-amber-700'}`}>{s.score}</p>
+                <p className="text-xs text-gray-500">pts</p>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+              <div className={`h-2 rounded-full ${i === 0 ? 'bg-yellow-500' : i === 1 ? 'bg-gray-500' : 'bg-amber-500'}`}
+                style={{ width: `${s.score}%` }} />
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="bg-white rounded-lg p-2">
+                <p className="font-bold text-gray-800">{s.total}</p>
+                <p className="text-gray-500">Total</p>
+              </div>
+              <div className="bg-white rounded-lg p-2">
+                <p className="font-bold text-green-600">{s.resolved}</p>
+                <p className="text-gray-500">Resolved</p>
+              </div>
+              <div className="bg-white rounded-lg p-2">
+                <p className={`font-bold ${s.overdue > 0 ? 'text-red-600' : 'text-gray-400'}`}>{s.overdue}</p>
+                <p className="text-gray-500">Overdue</p>
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
+      <Card className="p-4 bg-teal-50 border-teal-200">
+        <p className="text-xs font-semibold text-teal-800 mb-2">Improve Your City's Ranking</p>
+        <div className="space-y-1 text-xs text-teal-700">
+          <p>✅ Resolve your assigned complaints faster</p>
+          <p>⏰ Don't miss deadlines — each miss costs 5 pts</p>
+          <p>📈 More resolutions = higher city score</p>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 // ── Login ─────────────────────────────────────────────────────────────────────
-function StaffLogin({ onLogin }: { onLogin: (email: string, city: string, dept: string, name: string) => void }) {
+function StaffLogin({ onLogin, onBackToApp }: { onLogin: (email: string, city: string, dept: string, name: string) => void; onBackToApp: () => void }) {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
@@ -49,10 +130,25 @@ function StaffLogin({ onLogin }: { onLogin: (email: string, city: string, dept: 
     }, 700);
   };
 
-  const deptColors: Record<string, string> = { PWD:'bg-blue-100 text-blue-800', MSWM:'bg-green-100 text-green-800', MVB:'bg-cyan-100 text-cyan-800', USLD:'bg-yellow-100 text-yellow-800' };
+  const deptColors: Record<string, string> = {
+    PWD:'bg-blue-100 text-blue-800', MSWM:'bg-green-100 text-green-800',
+    MVB:'bg-cyan-100 text-cyan-800', USLD:'bg-yellow-100 text-yellow-800',
+    DRAIN:'bg-purple-100 text-purple-800', ELECT:'bg-orange-100 text-orange-800',
+    FIRE:'bg-red-100 text-red-800', SEWAGE:'bg-amber-100 text-amber-800',
+    ANIMAL:'bg-lime-100 text-lime-800',
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-0 overflow-hidden">
+      {/* Back to App button */}
+      <motion.button
+        onClick={onBackToApp}
+        className="absolute top-4 left-4 z-50 flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-full px-3 py-1.5 transition-all active:scale-95"
+        initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
+        whileTap={{ scale: 0.92 }}
+      >
+        ← Back
+      </motion.button>
 
       {/* ── Hero top section ──────────────────────────────────────────────── */}
       <div className="relative w-full flex flex-col items-center pt-50 pb-10 px-6 overflow-hidden">
@@ -89,7 +185,7 @@ function StaffLogin({ onLogin }: { onLogin: (email: string, city: string, dept: 
             Nagar<span className="text-teal-400">Setu</span>
           </h1>
           <p className="text-teal-300/80 text-sm mt-1 font-medium">Department Staff Portal</p>
-          <p className="text-slate-500 text-xs mt-1">SVH 2026 · Municipal Field Operations</p>
+          <p className="text-slate-500 text-xs mt-1">Municipal Field Operations</p>
         </motion.div>
 
         {/* Department chips */}
@@ -97,11 +193,11 @@ function StaffLogin({ onLogin }: { onLogin: (email: string, city: string, dept: 
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="flex gap-2 mt-5 flex-wrap justify-center"
+          className="flex gap-1.5 mt-5 flex-wrap justify-center max-w-xs"
         >
-          {['PWD', 'MSWM', 'MVB', 'USLD'].map(dept => (
-            <span key={dept} className="flex items-center gap-1 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/25 text-teal-300 text-xs font-medium">
-              <Wrench className="w-3 h-3" />{dept}
+          {DEPARTMENTS.map(dept => (
+            <span key={dept.id} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/25 text-teal-300 text-xs font-medium">
+              <Wrench className="w-3 h-3" />{dept.id}
             </span>
           ))}
         </motion.div>
@@ -122,20 +218,16 @@ function StaffLogin({ onLogin }: { onLogin: (email: string, city: string, dept: 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-1">
               <Label className="text-slate-300 text-sm">Staff Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 z-10" />
-                <Input value={email} onChange={e=>setEmail(e.target.value)}
-                  placeholder="pwd.indore@nagarsetu.gov.in"
-                  className="pl-9 bg-white border-white/30 text-slate-900 placeholder:text-slate-400 focus-visible:ring-teal-400" />
-              </div>
+              <Input value={email} onChange={e=>setEmail(e.target.value)}
+                placeholder="pwd.indore@nagarsetu.gov.in"
+                className="bg-white border-white/30 text-slate-900 placeholder:text-slate-400 focus-visible:ring-teal-400" />
             </div>
             <div className="space-y-1">
               <Label className="text-slate-300 text-sm">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 z-10" />
                 <Input type={showPw?'text':'password'} value={password} onChange={e=>setPassword(e.target.value)}
                   placeholder="staff123"
-                  className="pl-9 pr-10 bg-white border-white/30 text-slate-900 placeholder:text-slate-400 focus-visible:ring-teal-400" />
+                  className="pr-10 bg-white border-white/30 text-slate-900 placeholder:text-slate-400 focus-visible:ring-teal-400" />
                 <button type="button" onClick={()=>setShowPw(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800">
                   {showPw ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
                 </button>
@@ -151,21 +243,27 @@ function StaffLogin({ onLogin }: { onLogin: (email: string, city: string, dept: 
           {/* credentials hint */}
           <div className="mt-4 p-3 bg-white/5 rounded-lg text-xs text-slate-400 space-y-1.5">
             <p className="font-medium text-slate-300">Staff credentials (password: staff123)</p>
-            {['Indore','Ujjain','Bhopal'].map(city => (
-              <div key={city}>
-                <p className="text-slate-300 font-medium mt-1">{city}</p>
-                {['pwd','mswm','water','lights'].map(prefix => {
-                  const email = `${prefix}.${city.toLowerCase()}@nagarsetu.gov.in`;
-                  const acct  = STAFF_ACCOUNTS[email];
-                  return (
-                    <p key={prefix} className="text-xs">
-                      <span className={`inline-block px-1.5 rounded text-xs mr-1 ${deptColors[acct?.dept] || ''}`}>{acct?.dept}</span>
-                      {email}
-                    </p>
-                  );
-                })}
-              </div>
-            ))}
+            <p className="text-slate-400 text-xs">Format: dept.city@nagarsetu.gov.in</p>
+            <div className="grid grid-cols-2 gap-1 mt-1">
+              {['Indore','Ujjain','Bhopal'].map(city => (
+                <div key={city} className="bg-white/5 rounded p-1.5">
+                  <p className="text-teal-300 font-medium text-xs mb-0.5">{city}</p>
+                  {DEPARTMENTS.slice(0,5).map(dept => {
+                    const prefix = dept.id.toLowerCase();
+                    const emailKey = `${prefix}.${city.toLowerCase()}@nagarsetu.gov.in`;
+                    const acct = STAFF_ACCOUNTS[emailKey];
+                    if (!acct) return null;
+                    return (
+                      <p key={dept.id} className="text-xs leading-tight text-slate-400">
+                        <span className={`inline-block px-1 rounded text-xs mr-1 ${deptColors[acct.dept] || 'bg-gray-100 text-gray-700'}`}>{acct.dept}</span>
+                        {prefix}.{city.toLowerCase()}@nagarsetu.gov.in
+                      </p>
+                    );
+                  })}
+                  <p className="text-xs text-slate-500 italic mt-0.5">+ {DEPARTMENTS.length - 5} more depts…</p>
+                </div>
+              ))}
+            </div>
           </div>
         </Card>
       </motion.div>
@@ -176,11 +274,12 @@ function StaffLogin({ onLogin }: { onLogin: (email: string, city: string, dept: 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 function StaffDashboard({
   staffName, staffCity, staffDept,
-  allReports, onStatusUpdate, onLogout,
+  allReports, onStatusUpdate, onResolveWithProof, onLogout,
 }: {
   staffName: string; staffCity: string; staffDept: string;
   allReports: Report[];
   onStatusUpdate: (id: string, status: Report['status']) => void;
+  onResolveWithProof: (id: string, proofUrl: string) => void;
   onLogout: () => void;
 }) {
   const deptInfo = DEPARTMENTS.find(d => d.id === staffDept);
@@ -193,10 +292,23 @@ function StaffDashboard({
     [allReports, staffCity, staffDept]
   );
 
+  const [tab, setTab]           = useState<'complaints' | 'ranking'>('complaints');
   const [search, setSearch]     = useState('');
   const [statusFilter, setStatus] = useState('all');
   const [detail, setDetail]     = useState<Report | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  // Proof image state for resolving
+  const [proofPreview, setProofPreview]   = useState<string>('');
+  const [, setShowProofUpload] = useState(false);
+  const proofInputRef  = useRef<HTMLInputElement>(null);
+  const proofCameraInputRef = useRef<HTMLInputElement>(null);
+  // Keep a ref to always-current detail so handlers never read stale closure
+  const detailRef      = useRef<Report | null>(null);
+  const proofPreviewRef = useRef<string>('');
+
+  // Keep refs in sync
+  useEffect(() => { detailRef.current = detail; }, [detail]);
+  useEffect(() => { proofPreviewRef.current = proofPreview; }, [proofPreview]);
 
   const stats = useMemo(() => ({
     total:      myReports.length,
@@ -218,6 +330,33 @@ function StaffDashboard({
       setDetail(prev => prev?.id === id ? { ...prev, status } : prev);
       setUpdating(null);
     }, 400);
+  };
+
+  const handleProofImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => setProofPreview(String(reader.result));
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleSubmitWithProof = () => {
+    // Read from refs — avoids stale closure issue entirely
+    const currentDetail = detailRef.current;
+    const currentProof  = proofPreviewRef.current;
+    if (!currentDetail || !currentProof) return;
+
+    const reportId = currentDetail.id;
+    // Persist to App storage
+    onResolveWithProof(reportId, currentProof);
+    // Update drawer to show resolved state immediately
+    const resolved = { ...currentDetail, status: 'resolved' as const, resolutionProofUrl: currentProof };
+    detailRef.current = resolved;
+    setDetail(resolved);
+    setProofPreview('');
+    setShowProofUpload(false);
+    setUpdating(null);
   };
 
   const nextStatus = (current: Report['status']): Report['status'] | null => {
@@ -256,9 +395,33 @@ function StaffDashboard({
         </div>
       </div>
 
+      {/* Tab navigation */}
+      <div className="bg-white border-b sticky top-14 z-20">
+        <div className="flex max-w-4xl mx-auto">
+          {([
+            { id: 'complaints', label: 'My Work',     icon: FileText },
+            { id: 'ranking',    label: 'City Ranking', icon: Trophy   },
+          ] as const).map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold border-b-2 transition-colors ${
+                tab === t.id ? 'border-teal-500 text-teal-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}>
+              <t.icon className="w-3.5 h-3.5" />{t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="p-4 space-y-4 max-w-4xl mx-auto">
 
-        {/* stats */}
+        {/* ── CITY RANKING TAB ──────────────────────────────────────────── */}
+        {tab === 'ranking' && (
+          <StaffCityRanking allReports={allReports} myCity={staffCity} />
+        )}
+
+        {/* ── COMPLAINTS TAB ────────────────────────────────────────────── */}
+        {tab === 'complaints' && (
+          <>
         <div className="grid grid-cols-4 gap-3">
           {[
             { label:'Assigned',    v:stats.total,      color:'text-slate-700', bg:'bg-white',      icon:FileText    },
@@ -312,13 +475,14 @@ function StaffDashboard({
               {filtered.map((report, i) => {
                 const sc = statusConfig[report.status];
                 const nl = nextLabel(report.status);
+                const imgSrc = report.media?.[0]?.url || report.imageUrl;
                 return (
                   <motion.div key={report.id} className="bg-white rounded-xl border hover:shadow-md transition-all"
                     initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:i*0.04 }}>
                     <div className="p-4 cursor-pointer" onClick={()=>setDetail(report)}>
                       <div className="flex gap-3">
                         <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                          <img src={report.imageUrl} alt={report.title} className="w-full h-full object-cover"
+                          <img src={imgSrc} alt={report.title} className="w-full h-full object-cover"
                             onError={e=>{(e.target as HTMLImageElement).src='https://placehold.co/64x64?text=N/A';}} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -332,6 +496,18 @@ function StaffDashboard({
                             <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3"/>{report.ward}</span>
                             <span>·</span>
                             <span className="flex items-center gap-0.5"><Clock className="w-3 h-3"/>{fmt(report.timestamp)}</span>
+                            {report.deadline && (() => {
+                              const diff = new Date(report.deadline).getTime() - Date.now();
+                              const overdue = diff < 0;
+                              const h = Math.floor(diff / 3600000);
+                              const dy = Math.floor(diff / 86400000);
+                              return (
+                                <span className={`flex items-center gap-0.5 text-xs font-medium ${overdue ? 'text-red-600' : h < 24 ? 'text-orange-500' : 'text-blue-500'}`}>
+                                  <Timer className="w-3 h-3"/>
+                                  {overdue ? 'OVERDUE' : h < 24 ? `${h}h left` : `${dy}d left`}
+                                </span>
+                              );
+                            })()}
                           </div>
                           <p className="text-xs text-gray-600 mt-1 line-clamp-1">{report.description}</p>
                         </div>
@@ -344,7 +520,14 @@ function StaffDashboard({
                         <span className="text-xs text-muted-foreground">Update progress:</span>
                         <Button size="sm"
                           disabled={updating===report.id}
-                          onClick={()=>handleStatusUpdate(report.id, nextStatus(report.status)!)}
+                          onClick={() => {
+                            // "Mark Resolved" opens drawer to upload proof
+                            if (nextStatus(report.status) === 'resolved') {
+                              setDetail(report);
+                            } else {
+                              handleStatusUpdate(report.id, nextStatus(report.status)!);
+                            }
+                          }}
                           className={`text-xs gap-1.5 ${report.status==='submitted'?'bg-green-600 hover:bg-green-500':''}`}>
                           {updating===report.id
                             ? <><span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"/>Working...</>
@@ -363,6 +546,8 @@ function StaffDashboard({
             </div>
           </>
         )}
+          </>
+        )}
       </div>
 
       {/* detail drawer */}
@@ -372,7 +557,7 @@ function StaffDashboard({
             <motion.div
               className="absolute inset-0 bg-black/40 z-40"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setDetail(null)}
+              onClick={() => { setDetail(null); setProofPreview(''); setShowProofUpload(false); }}
             />
             <motion.div
               className="absolute right-0 top-0 bottom-0 w-full bg-white z-50 shadow-2xl overflow-y-auto"
@@ -384,11 +569,11 @@ function StaffDashboard({
                   <h3 className="font-semibold text-sm line-clamp-1">{detail.title}</h3>
                   <p className="text-xs text-muted-foreground">#{detail.id} · {detail.district}</p>
                 </div>
-                <button onClick={()=>setDetail(null)} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4"/></button>
+                <button onClick={()=>{ setDetail(null); setProofPreview(''); setShowProofUpload(false); }} className="p-1.5 rounded-lg hover:bg-gray-100"><X className="w-4 h-4"/></button>
               </div>
               <div className="p-4 space-y-4">
                 <div className="aspect-video rounded-xl overflow-hidden bg-gray-100">
-                  <img src={detail.imageUrl} alt={detail.title} className="w-full h-full object-cover"
+                  <img src={detail.media?.[0]?.url || detail.imageUrl} alt={detail.title} className="w-full h-full object-cover"
                     onError={e=>{(e.target as HTMLImageElement).src='https://placehold.co/400x225?text=No+Image';}}/>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -426,20 +611,108 @@ function StaffDashboard({
                   </div>
                 )}
 
-                {/* status progression */}
+                {/* ── Resolution proof photo (required before marking resolved) ── */}
+                {detail.status !== 'resolved' && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Camera className="w-4 h-4 text-green-700" />
+                      <p className="text-sm font-semibold text-green-900">Resolution Proof Photo</p>
+                      <span className="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">Required to resolve</span>
+                    </div>
+                    <p className="text-xs text-green-700">Upload a photo showing the issue has been fixed. This will be visible to the citizen in their report.</p>
+
+                    {/* hidden file input */}
+                    <input ref={proofInputRef} type="file" accept="image/*" className="hidden" onChange={handleProofImageChange} />
+                    <input ref={proofCameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleProofImageChange} />
+
+                    {proofPreview ? (
+                      <div className="space-y-2">
+                        <div className="rounded-lg overflow-hidden bg-gray-100 w-full" style={{ maxHeight: '200px' }}>
+                          <img src={proofPreview} alt="Proof" className="w-full object-contain" style={{ maxHeight: '200px' }} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button onClick={() => proofCameraInputRef.current?.click()}
+                            className="text-xs border border-green-400 text-green-700 rounded-lg py-2 hover:bg-green-100 flex items-center justify-center gap-1">
+                            <Camera className="w-3 h-3" /> Retake Photo
+                          </button>
+                          <button onClick={() => proofInputRef.current?.click()}
+                            className="text-xs border border-green-400 text-green-700 rounded-lg py-2 hover:bg-green-100 flex items-center justify-center gap-1">
+                            <Upload className="w-3 h-3" />Change Photo
+                          </button>
+                        </div>
+                        <button onClick={() => setProofPreview('')}
+                          className="w-full text-xs border border-red-300 text-red-600 rounded-lg py-2 hover:bg-red-50 flex items-center justify-center gap-1">
+                          <X className="w-3 h-3" /> Remove Photo
+                        </button>
+                        <Button
+                          className="w-full bg-green-600 hover:bg-green-500 text-white gap-2"
+                          disabled={false}
+                          onClick={handleSubmitWithProof}>
+                          <CheckCircle className="w-4 h-4" />Submit Proof &amp; Mark Resolved
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button onClick={() => proofCameraInputRef.current?.click()}
+                            className="border-2 border-dashed border-green-400 rounded-lg py-5 flex flex-col items-center gap-2 text-green-700 hover:bg-green-100 transition-all">
+                            <Camera className="w-7 h-7" />
+                            <span className="text-xs font-medium">Take Photo</span>
+                          </button>
+                          <button onClick={() => proofInputRef.current?.click()}
+                            className="border-2 border-dashed border-green-400 rounded-lg py-5 flex flex-col items-center gap-2 text-green-700 hover:bg-green-100 transition-all">
+                            <ImagePlus className="w-7 h-7" />
+                            <span className="text-xs font-medium">Choose Photo</span>
+                          </button>
+                        </div>
+                        <p className="text-xs text-center text-green-500">A photo of completed work is required</p>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Show proof if already resolved */}
+                {detail.status === 'resolved' && detail.resolutionProofUrl && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl overflow-hidden">
+                    <div className="px-3 py-2 flex items-center gap-2 bg-green-100 border-b border-green-200">
+                      <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+                      <span className="text-xs font-semibold text-green-800">Resolution Proof Photo</span>
+                    </div>
+                    <div style={{ maxHeight: '200px' }} className="flex items-center justify-center bg-gray-50">
+                      <img src={detail.resolutionProofUrl} alt="Resolution proof"
+                        className="w-full object-contain" style={{ maxHeight: '200px' }}
+                        onError={e => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x200?text=No+Proof'; }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* status progression — only for non-resolved steps, resolved requires proof above */}
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Update Status</p>
                   <div className="grid grid-cols-2 gap-2">
-                    {(['acknowledged','submitted','resolved'] as Report['status'][]).map(s => (
+                    {(['acknowledged','submitted'] as Report['status'][]).map(s => (
                       <button key={s}
-                        disabled={detail.status===s||updating===detail.id}
-                        onClick={()=>handleStatusUpdate(detail.id,s)}
+                        disabled={detail.status===s || updating===detail.id}
+                        onClick={()=>handleStatusUpdate(detail.id, s)}
                         className={`text-xs py-2 px-3 rounded-lg border transition-all font-medium ${
                           detail.status===s ? `${statusConfig[s].color} cursor-default` : 'border-gray-200 hover:border-primary hover:bg-primary hover:text-white text-gray-600'
                         }`}>
                         {statusConfig[s].label}
                       </button>
                     ))}
+                    {/* Resolved — opens proof capture or submits once proof is ready */}
+                    <button
+                      disabled={detail.status === 'resolved'}
+                      onClick={() => proofPreview ? handleSubmitWithProof() : proofCameraInputRef.current?.click()}
+                      className={`text-xs py-2 px-3 rounded-lg border font-medium transition-all ${
+                        detail.status === 'resolved'
+                          ? `${statusConfig['resolved'].color} cursor-default`
+                          : proofPreview
+                          ? 'border-green-500 bg-green-50 text-green-700 hover:bg-green-100'
+                          : 'border-green-300 text-green-700 hover:bg-green-50'
+                      }`}>
+                      {detail.status === 'resolved' ? '✓ Resolved' : proofPreview ? 'Mark Resolved' : 'Add Proof & Resolve'}
+                    </button>
                   </div>
                 </div>
                 {detail.comments.length > 0 && (
@@ -468,18 +741,20 @@ function StaffDashboard({
 interface StaffPortalProps {
   allReports: Report[];
   onStatusUpdate: (reportId: string, status: Report['status']) => void;
+  onResolveWithProof: (reportId: string, proofUrl: string) => void;
   onClose: () => void;
 }
 
-export function StaffPortal({ allReports, onStatusUpdate }: StaffPortalProps) {
+export function StaffPortal({ allReports, onStatusUpdate, onResolveWithProof, onClose }: StaffPortalProps) {
   const [session, setSession] = useState<{ email: string; city: string; dept: string; name: string } | null>(null);
 
   return (
-    <div className="min-h-screen bg-background w-full mx-auto relative mobile-container overflow-y-auto">
+    <div className="min-h-screen bg-background w-full relative overflow-y-auto">
       {session
         ? <StaffDashboard staffName={session.name} staffCity={session.city} staffDept={session.dept}
-            allReports={allReports} onStatusUpdate={onStatusUpdate} onLogout={() => setSession(null)} />
-        : <StaffLogin onLogin={(email, city, dept, name) => setSession({ email, city, dept, name })} />}
+            allReports={allReports} onStatusUpdate={onStatusUpdate} onResolveWithProof={onResolveWithProof}
+            onLogout={() => setSession(null)} />
+        : <StaffLogin onLogin={(email, city, dept, name) => setSession({ email, city, dept, name })} onBackToApp={onClose} />}
     </div>
   );
 }

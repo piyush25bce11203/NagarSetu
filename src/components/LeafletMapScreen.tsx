@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ArrowUp, Eye, X } from 'lucide-react';
@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { motion } from 'motion/react';
 import { Report, User } from '../App';
-import { translations, getT } from './translations';
+import { getT } from './translations';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { getDistrictCenter, generateRandomCoordinates } from '../utils/mapConfig';
 

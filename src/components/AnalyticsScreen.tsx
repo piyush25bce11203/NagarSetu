@@ -1,10 +1,8 @@
-import React from 'react';
-import { BarChart3, TrendingUp, TrendingDown, Minus, MapPin, Clock, Users, CheckCircle } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Minus, MapPin, Clock, Users, CheckCircle, Activity, ArrowUpRight } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
 import { motion } from 'motion/react';
 import { Report, User } from '../App';
-import { translations, getT } from './translations';
 import { generateInsights } from '../utils/aiClassification';
 
 interface AnalyticsScreenProps {
@@ -13,8 +11,28 @@ interface AnalyticsScreenProps {
 }
 
 export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
-  const t = getT(user.language);
   const insights = generateInsights(reports);
+  const districtReports = reports.filter(report => report.district === user.district);
+
+  const trendData = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date();
+    day.setHours(0, 0, 0, 0);
+    day.setDate(day.getDate() - (6 - index));
+    const nextDay = new Date(day);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return {
+      label: day.toLocaleDateString('en-IN', { weekday: 'short' }),
+      count: districtReports.filter(report => report.timestamp >= day && report.timestamp < nextDay).length,
+    };
+  });
+  const maxTrend = Math.max(...trendData.map(day => day.count), 1);
+  const trendPoints = trendData.map((day, index) => `${index * 50 + 10},${92 - (day.count / maxTrend) * 68}`).join(' ');
+  const statusBreakdown = [
+    { label: 'Resolved', count: districtReports.filter(report => report.status === 'resolved').length, color: '#10b981' },
+    { label: 'In progress', count: districtReports.filter(report => report.status === 'submitted' || report.status === 'acknowledged').length, color: '#0ea5e9' },
+    { label: 'Pending', count: districtReports.filter(report => report.status === 'pending').length, color: '#f59e0b' },
+  ];
+  const maxStatus = Math.max(...statusBreakdown.map(status => status.count), 1);
 
   const statsCards = [
     {
@@ -64,12 +82,20 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
     }));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="analytics-screen min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-40">
+      <div className="analytics-header bg-white border-b sticky top-0 z-40">
         <div className="p-4">
-          <h1 className="text-xl mb-1 text-primary">Analytics Dashboard</h1>
-          <p className="text-sm text-muted-foreground">{user.district} District</p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="analytics-eyebrow">Civic pulse · last 7 days</p>
+              <h1 className="text-xl mb-1 text-primary">Analytics Dashboard</h1>
+              <p className="text-sm text-muted-foreground">{user.district} District</p>
+            </div>
+            <div className="analytics-header-icon">
+              <Activity className="w-5 h-5" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -83,7 +109,7 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className={`p-4 ${stat.color}`}>
+              <Card className={`analytics-kpi p-4 ${stat.color}`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium opacity-70">{stat.title}</p>
@@ -96,8 +122,64 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
           ))}
         </div>
 
+        <Card className="analytics-card analytics-trend-card p-4">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold">Report activity</h3>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">New reports submitted across {user.district}</p>
+            </div>
+            <span className="analytics-period">7D <ArrowUpRight className="w-3 h-3" /></span>
+          </div>
+          <div className="analytics-chart-wrap">
+            <svg viewBox="0 0 310 112" role="img" aria-label="Seven day report activity trend" className="analytics-line-chart">
+              {[24, 58, 92].map(y => <line key={y} x1="10" x2="300" y1={y} y2={y} className="analytics-grid-line" />)}
+              <polyline points={trendPoints} fill="none" className="analytics-trend-line" />
+              {trendData.map((day, index) => {
+                const x = index * 50 + 10;
+                const y = 92 - (day.count / maxTrend) * 68;
+                return <circle key={day.label} cx={x} cy={y} r="3.5" className="analytics-trend-dot" />;
+              })}
+            </svg>
+            <div className="analytics-chart-labels">
+              {trendData.map(day => <span key={day.label}>{day.label}</span>)}
+            </div>
+          </div>
+        </Card>
+
+        <Card className="analytics-card p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold">Resolution pipeline</h3>
+              <p className="text-xs text-muted-foreground mt-1">Where active reports stand today</p>
+            </div>
+            <span className="analytics-rate-badge">{insights.resolvedPercentage}% resolved</span>
+          </div>
+          <div className="space-y-3">
+            {statusBreakdown.map(status => (
+              <div key={status.label} className="analytics-status-row">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="font-medium">{status.label}</span>
+                  <span className="text-muted-foreground">{status.count}</span>
+                </div>
+                <div className="analytics-status-track">
+                  <motion.div
+                    className="analytics-status-fill"
+                    style={{ backgroundColor: status.color }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(status.count / maxStatus) * 100}%` }}
+                    transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
         {/* Top Issue Types */}
-        <Card className="p-4">
+        <Card className="analytics-card p-4">
           <h3 className="font-medium mb-4 flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Top Issue Types
@@ -126,7 +208,7 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
         </Card>
 
         {/* Critical Areas */}
-        <Card className="p-4">
+        <Card className="analytics-card p-4">
           <h3 className="font-medium mb-4 flex items-center gap-2">
             <MapPin className="w-4 h-4" />
             Critical Areas
@@ -153,7 +235,7 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
         </Card>
 
         {/* Recent Activity */}
-        <Card className="p-4">
+        <Card className="analytics-card p-4">
           <h3 className="font-medium mb-4 flex items-center gap-2">
             <Clock className="w-4 h-4" />
             Recent Activity
@@ -187,7 +269,7 @@ export function AnalyticsScreen({ reports, user }: AnalyticsScreenProps) {
         </Card>
 
         {/* Performance Metrics */}
-        <Card className="p-4">
+        <Card className="analytics-card p-4">
           <h3 className="font-medium mb-4">Performance Insights</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">

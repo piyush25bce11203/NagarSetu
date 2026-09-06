@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { MapPin, Languages, Loader, Navigation, CheckCircle } from 'lucide-react';
-import { translations, Language, getT } from './translations';
+import { Language, getT } from './translations';
 import { motion } from 'motion/react';
 
 interface District {
@@ -57,8 +57,6 @@ export function OnboardingScreen({
   const [detecting, setDetecting]       = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>('');
 
-  const t = getT(currentLanguage);
-
   const handleLanguageSelect = (language: string) => {
     onLanguageChange(language as Language);
   };
@@ -90,7 +88,6 @@ export function OnboardingScreen({
             <img src="/logo.png" alt="NagarSetu Logo" className="w-full h-full object-contain p-1" />
           </div>
           <h1 className="text-2xl font-bold text-primary">NagarSetu</h1>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">SVH 2026</p>
           <p className="text-sm text-muted-foreground mt-1">Select your language to continue</p>
         </div>
 

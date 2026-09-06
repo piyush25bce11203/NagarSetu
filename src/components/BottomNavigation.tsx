@@ -1,5 +1,4 @@
-import React from 'react';
-import { Home, Plus, Map, User, BarChart3, Trophy } from 'lucide-react';
+import { Home, Plus, User, BarChart3, Trophy } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Screen } from '../App';
 import { translations, Language } from './translations';
@@ -39,13 +38,27 @@ export function BottomNavigation({ currentScreen, onScreenChange, language }: Bo
                   : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => onScreenChange(item.id)}
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ scale: item.isCenter ? 1.05 : 1.02 }}
+              whileTap={{ scale: 0.88 }}
+              whileHover={{ scale: item.isCenter ? 1.08 : 1.04 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             >
-              <Icon className={`w-5 h-5 ${item.isCenter ? 'w-6 h-6' : ''}`} />
+              <motion.div
+                animate={isActive && !item.isCenter ? { y: -2 } : { y: 0 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              >
+                <Icon className={`${item.isCenter ? 'w-6 h-6' : 'w-5 h-5'}`} />
+              </motion.div>
               <span className={`text-xs mt-1 ${item.isCenter ? 'hidden' : ''}`}>
                 {item.label}
               </span>
+              {/* Active indicator dot */}
+              {isActive && !item.isCenter && (
+                <motion.div
+                  layoutId="nav-dot"
+                  className="w-1 h-1 rounded-full bg-primary mt-0.5"
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              )}
             </motion.button>
           );
         })}

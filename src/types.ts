@@ -28,6 +28,8 @@ export interface Report {
   timestamp: Date;
   aiTag: string;
   aiConfidence: number;
+  // AI suggested department based on image/description analysis
+  aiSuggestedDept?: string;
   status: 'pending' | 'acknowledged' | 'submitted' | 'resolved';
   upvotes: number;
   comments: Comment[];
@@ -38,4 +40,9 @@ export interface Report {
   isTamperDetected?: boolean;
   priority?: 'high' | 'medium' | 'low';
   assignedDept?: string;
+  // Deadline set by admin — if missed and not resolved, city loses ranking points
+  deadline?: string; // ISO string
+  deadlinePenaltyApplied?: boolean;
+  // Photo proof submitted by staff when marking resolved
+  resolutionProofUrl?: string;
 }

@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Search, ArrowUp, MessageCircle, Flag, X, Mic, Building2, Clock, MapPin, CheckCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Textarea } from './ui/textarea';
 import { motion, AnimatePresence } from 'motion/react';
-import { Report, Comment, User } from '../App';
-import { translations, getT } from './translations';
+import { Report, User } from '../App';
+import { getT } from './translations';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { MediaCarousel } from './MediaCarousel';
 import { FloatingActionButton } from './FloatingActionButton';
@@ -36,8 +36,8 @@ export function HomeScreen({
   const [newComment, setNewComment] = useState('');
   const [showUpvotePopup, setShowUpvotePopup] = useState(false);
   const [showCommentPopup, setShowCommentPopup] = useState(false);
-  const [upvotedReportId, setUpvotedReportId] = useState<string | null>(null);
-  const [commentedReportId, setCommentedReportId] = useState<string | null>(null);
+  const [, setUpvotedReportId] = useState<string | null>(null);
+  const [, setCommentedReportId] = useState<string | null>(null);
   const [tempComment, setTempComment] = useState('');
 
   const t = getT(user.language);
@@ -142,16 +142,16 @@ export function HomeScreen({
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="civic-home min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-40 shadow-sm">
+      <div className="civic-header bg-white border-b sticky top-0 z-40 shadow-sm">
         <div className="p-4">
           <div className="flex items-center justify-between mb-3">
-            <div>
+            <div className="civic-brand-lockup">
               <h1 className="text-xl font-bold text-primary">NagarSetu</h1>
               <p className="text-sm text-muted-foreground">{user.district} Municipal Corporation</p>
             </div>
-            <div className="text-right">
+            <div className="civic-live-status text-right">
               <div className="text-sm font-medium text-green-600">{filteredReports.length} Active Reports</div>
               <div className="text-xs text-muted-foreground">Real-time updates</div>
             </div>
@@ -162,7 +162,7 @@ export function HomeScreen({
               placeholder={t.search}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-gray-50 border-gray-200"
+              className="civic-search pl-10 bg-gray-50 border-gray-200"
             />
           </div>
 
@@ -174,7 +174,7 @@ export function HomeScreen({
         {filteredReports.map((report) => (
           <motion.div
             key={report.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-200 h-96 flex flex-col"
+            className="civic-report-card bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-all duration-200 h-96 flex flex-col"
             onClick={() => onReportSelect(report)}
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.98 }}

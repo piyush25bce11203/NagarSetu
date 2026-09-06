@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Loader, CheckCircle } from 'lucide-react';
 
@@ -8,9 +7,21 @@ interface PostLocationLoadingScreenProps {
 
 export function PostLocationLoadingScreen({ detectedLocation }: PostLocationLoadingScreenProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex flex-col items-center justify-center p-6">
+    <div className="loading-screen min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex flex-col items-center justify-center p-6">
+      <div className="loading-water-drops" aria-hidden="true">
+        {[0, 1, 2, 3, 4].map(index => (
+          <motion.span
+            key={index}
+            className="loading-water-drop"
+            style={{ left: `${20 + index * 15}%` }}
+            initial={{ y: -30, opacity: 0 }}
+            animate={{ y: ['0%', '170px'], opacity: [0, 0.65, 0] }}
+            transition={{ duration: 2.3, delay: index * 0.42, repeat: Infinity, ease: 'easeIn' }}
+          />
+        ))}
+      </div>
       <motion.div 
-        className="text-center"
+        className="relative z-10 text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -39,13 +50,13 @@ export function PostLocationLoadingScreen({ detectedLocation }: PostLocationLoad
         </motion.div>
 
         {/* Circular Loader */}
-        <motion.div 
-          className="w-8 h-8 mx-auto mb-6"
+        <motion.div
+          className="loading-spinner-ring loading-spinner-ring-sm mx-auto mb-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.6 }}
         >
-          <Loader className="w-8 h-8 text-green-600 animate-spin" />
+          <Loader className="w-4 h-4 text-green-600" />
         </motion.div>
 
         {/* Loading Messages */}

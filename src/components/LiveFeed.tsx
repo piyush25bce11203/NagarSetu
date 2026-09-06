@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle, AlertCircle, Clock, Zap } from 'lucide-react';
 import { Badge } from './ui/badge';
@@ -15,39 +15,40 @@ interface LiveFeedProps {
   isVisible: boolean;
 }
 
+// Defined outside component so it's stable and doesn't need to be a dep
+const mockUpdates: LiveUpdate[] = [
+  {
+    id: '1',
+    type: 'status_update',
+    message: 'Pothole on AB Road marked for immediate repair',
+    timestamp: new Date(),
+    priority: 'high'
+  },
+  {
+    id: '2',
+    type: 'department_assigned',
+    message: 'PWD team assigned to drainage issue in Indore',
+    timestamp: new Date(Date.now() - 30000),
+    priority: 'medium'
+  },
+  {
+    id: '3',
+    type: 'resolved',
+    message: 'Street light at Bhawarkuan has been fixed',
+    timestamp: new Date(Date.now() - 120000),
+    priority: 'low'
+  },
+  {
+    id: '4',
+    type: 'new_report',
+    message: 'New water supply issue reported in Bhopal',
+    timestamp: new Date(Date.now() - 300000),
+    priority: 'high'
+  }
+];
+
 export function LiveFeed({ isVisible }: LiveFeedProps) {
   const [updates, setUpdates] = useState<LiveUpdate[]>([]);
-
-  const mockUpdates: LiveUpdate[] = [
-    {
-      id: '1',
-      type: 'status_update',
-      message: 'Pothole on AB Road marked for immediate repair',
-      timestamp: new Date(),
-      priority: 'high'
-    },
-    {
-      id: '2',
-      type: 'department_assigned',
-      message: 'PWD team assigned to drainage issue in Indore',
-      timestamp: new Date(Date.now() - 30000),
-      priority: 'medium'
-    },
-    {
-      id: '3',
-      type: 'resolved',
-      message: 'Street light at Bhawarkuan has been fixed',
-      timestamp: new Date(Date.now() - 120000),
-      priority: 'low'
-    },
-    {
-      id: '4',
-      type: 'new_report',
-      message: 'New water supply issue reported in Bhopal',
-      timestamp: new Date(Date.now() - 300000),
-      priority: 'high'
-    }
-  ];
 
   useEffect(() => {
     if (isVisible) {

@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
-import { Settings, Globe, Wifi, WifiOff, Plus, User, MapPin, Calendar, Award, TrendingUp, Languages, Clock, Star, Download, RotateCcw, Trophy, Zap, Shield, LogOut } from 'lucide-react';
+import { Settings, Wifi, WifiOff, User, Languages, Clock, Star, Download, RotateCcw, Trophy, Zap, Shield, LogOut } from 'lucide-react';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
-import { Card } from './ui/card';
 import { Separator } from './ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { motion } from 'motion/react';
 import { Report, User as UserType } from '../App';
-import { translations, Language, getT } from './translations';
+import { Language, getT } from './translations';
 import { TechShowcase } from './TechShowcase';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
@@ -102,7 +100,7 @@ export function ProfileScreen({
     window.URL.revokeObjectURL(url);
   };
 
-  const handleReportAgain = (originalReport: Report) => {
+  const handleReportAgain = (_originalReport: Report) => {
     // This would typically pre-fill the report form with similar details
     onReportAgain();
   };
@@ -271,9 +269,9 @@ export function ProfileScreen({
                     whileTap={{ scale: 0.98 }}
                   >
                     <div className="flex gap-3">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
                         <ImageWithFallback
-                          src={report.imageUrl}
+                          src={report.media?.[0]?.url || report.imageUrl || ''}
                           alt={report.title}
                           className="w-full h-full object-cover"
                         />
@@ -295,6 +293,18 @@ export function ProfileScreen({
                           <div className="flex items-center gap-1 text-xs text-orange-600 mb-2">
                             <Clock className="w-3 h-3" />
                             {t.slaCountdown}
+                          </div>
+                        )}
+
+                        {/* Resolution proof image for citizen */}
+                        {report.status === 'resolved' && report.resolutionProofUrl && (
+                          <div className="mb-2 rounded-lg overflow-hidden border border-green-200 bg-green-50">
+                            <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-xs text-green-700 font-medium">
+                              <span>✅</span> Work completed — proof by staff
+                            </div>
+                            <img src={report.resolutionProofUrl} alt="Proof of resolution"
+                              className="w-full object-contain" style={{ maxHeight: '140px' }}
+                              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                           </div>
                         )}
                         
