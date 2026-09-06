@@ -4,7 +4,8 @@ import { MiniMap } from './MiniMap';
 import {
   HardHat, LogIn, Eye, EyeOff, LogOut,
   CheckCircle, AlertCircle, Clock, MapPin, RefreshCw, X, Search, Filter, FileText, Wrench,
-  Trophy, Crown, Medal, Award, Star, Timer, ImagePlus, Camera, Upload
+  Trophy, Crown, Medal, Award, Star, Timer, ImagePlus, Camera, Upload,
+  UserCircle, Mail, Building2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
@@ -13,6 +14,7 @@ import { Label } from './ui/label';
 import { Card } from './ui/card';
 import { STAFF_ACCOUNTS, DEPARTMENTS, CITY_LIST } from '../data/mockReports';
 import type { Report } from '../App';
+import { ThemeToggle } from './ThemeToggle';
 
 const statusConfig: Record<Report['status'], { label: string; color: string; dot: string }> = {
   pending:      { label: 'Pending',      color: 'bg-red-100 text-red-800',       dot: 'bg-red-500'    },
@@ -24,6 +26,55 @@ const statusConfig: Record<Report['status'], { label: string; color: string; dot
 function fmt(ts: Date) {
   const d = Date.now() - ts.getTime(), m = Math.floor(d/60000), h = Math.floor(d/3600000), dy = Math.floor(d/86400000);
   return m < 60 ? `${m}m ago` : h < 24 ? `${h}h ago` : `${dy}d ago`;
+}
+
+function StaffProfilePanel({
+  staffName, staffEmail, staffCity, staffDept, deptInfo, isDarkMode, onToggleTheme,
+}: {
+  staffName: string;
+  staffEmail: string;
+  staffCity: string;
+  staffDept: string;
+  deptInfo?: typeof DEPARTMENTS[number];
+  isDarkMode: boolean;
+  onToggleTheme: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl p-5 text-white shadow-sm" style={{ backgroundColor: '#134e4a' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-teal-400 flex items-center justify-center">
+            <HardHat className="w-6 h-6 text-teal-950" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-teal-200">Staff profile</p>
+            <h2 className="text-xl font-bold mt-1">{staffName}</h2>
+            <p className="text-xs text-teal-100 mt-1">Department operations account</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 divide-y shadow-sm">
+        <div className="p-4 flex items-center gap-3">
+          <UserCircle className="w-5 h-5 text-teal-600" />
+          <div><p className="text-[11px] text-slate-500">Full name</p><p className="text-sm font-semibold text-slate-900">{staffName}</p></div>
+        </div>
+        <div className="p-4 flex items-center gap-3">
+          <Mail className="w-5 h-5 text-teal-600" />
+          <div className="min-w-0"><p className="text-[11px] text-slate-500">Official email</p><p className="text-sm font-semibold text-slate-900 truncate">{staffEmail}</p></div>
+        </div>
+        <div className="p-4 flex items-center gap-3">
+          <Building2 className="w-5 h-5 text-teal-600" />
+          <div><p className="text-[11px] text-slate-500">Department and city</p><p className="text-sm font-semibold text-slate-900">{staffDept} · {staffCity}</p><p className="text-xs text-slate-500 mt-0.5">{deptInfo?.fullName}</p></div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 flex items-center justify-between shadow-sm">
+        <div><p className="text-sm font-semibold text-slate-900">Appearance</p><p className="text-xs text-slate-500 mt-1">Use light or dark mode</p></div>
+        <div className="relative w-10 h-10"><ThemeToggle isDarkMode={isDarkMode} onToggle={onToggleTheme} /></div>
+      </div>
+    </div>
+  );
 }
 
 // ── Staff City Ranking ────────────────────────────────────────────────────────
@@ -273,10 +324,11 @@ function StaffLogin({ onLogin, onBackToApp }: { onLogin: (email: string, city: s
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 function StaffDashboard({
-  staffName, staffCity, staffDept,
+  staffName, staffEmail, staffCity, staffDept, isDarkMode, onToggleTheme,
   allReports, onStatusUpdate, onResolveWithProof, onLogout,
 }: {
-  staffName: string; staffCity: string; staffDept: string;
+  staffName: string; staffEmail: string; staffCity: string; staffDept: string;
+  isDarkMode: boolean; onToggleTheme: () => void;
   allReports: Report[];
   onStatusUpdate: (id: string, status: Report['status']) => void;
   onResolveWithProof: (id: string, proofUrl: string) => void;
@@ -292,7 +344,7 @@ function StaffDashboard({
     [allReports, staffCity, staffDept]
   );
 
-  const [tab, setTab]           = useState<'complaints' | 'ranking'>('complaints');
+  const [tab, setTab]           = useState<'complaints' | 'ranking' | 'profile'>('complaints');
   const [search, setSearch]     = useState('');
   const [statusFilter, setStatus] = useState('all');
   const [detail, setDetail]     = useState<Report | null>(null);
@@ -401,6 +453,7 @@ function StaffDashboard({
           {([
             { id: 'complaints', label: 'My Work',     icon: FileText },
             { id: 'ranking',    label: 'City Ranking', icon: Trophy   },
+            { id: 'profile',    label: 'Profile',      icon: UserCircle },
           ] as const).map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold border-b-2 transition-colors ${
@@ -413,6 +466,11 @@ function StaffDashboard({
       </div>
 
       <div className="p-4 space-y-4 max-w-4xl mx-auto">
+
+        {tab === 'profile' && (
+          <StaffProfilePanel staffName={staffName} staffEmail={staffEmail} staffCity={staffCity} staffDept={staffDept}
+            deptInfo={deptInfo} isDarkMode={isDarkMode} onToggleTheme={onToggleTheme} />
+        )}
 
         {/* ── CITY RANKING TAB ──────────────────────────────────────────── */}
         {tab === 'ranking' && (
@@ -742,16 +800,19 @@ interface StaffPortalProps {
   allReports: Report[];
   onStatusUpdate: (reportId: string, status: Report['status']) => void;
   onResolveWithProof: (reportId: string, proofUrl: string) => void;
+  isDarkMode: boolean;
+  onToggleTheme: () => void;
   onClose: () => void;
 }
 
-export function StaffPortal({ allReports, onStatusUpdate, onResolveWithProof, onClose }: StaffPortalProps) {
+export function StaffPortal({ allReports, onStatusUpdate, onResolveWithProof, isDarkMode, onToggleTheme, onClose }: StaffPortalProps) {
   const [session, setSession] = useState<{ email: string; city: string; dept: string; name: string } | null>(null);
 
   return (
     <div className="min-h-screen bg-background w-full relative overflow-y-auto">
       {session
-        ? <StaffDashboard staffName={session.name} staffCity={session.city} staffDept={session.dept}
+        ? <StaffDashboard staffName={session.name} staffEmail={session.email} staffCity={session.city} staffDept={session.dept}
+          isDarkMode={isDarkMode} onToggleTheme={onToggleTheme}
             allReports={allReports} onStatusUpdate={onStatusUpdate} onResolveWithProof={onResolveWithProof}
             onLogout={() => setSession(null)} />
         : <StaffLogin onLogin={(email, city, dept, name) => setSession({ email, city, dept, name })} onBackToApp={onClose} />}

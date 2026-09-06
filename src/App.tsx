@@ -250,7 +250,16 @@ export default function App() {
   };
 
   const handleAssignDept = (reportId: string, dept: string) => {
+    const report = reports.find(r => r.id === reportId);
+    if (!report || report.status === 'ignored') return;
     const updated = ReportStore.update(reportId, { assignedDept: dept, status: 'acknowledged' });
+    setReports(updated);
+  };
+
+  const handleIgnoreReport = (reportId: string) => {
+    const updated = ReportStore.update(reportId, {
+      status: 'ignored', assignedDept: undefined, deadline: undefined,
+    });
     setReports(updated);
   };
 
@@ -303,7 +312,6 @@ export default function App() {
       <>
         <SVHBackground />
         <div className="min-h-screen bg-background w-full mx-auto relative mobile-container overflow-y-auto">
-          {themeToggle}
           {/* Back button — lives inside the mobile container, sticky at top */}
           <motion.button
             onClick={() => setPortalMode('none')}
@@ -318,7 +326,8 @@ export default function App() {
             initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.38, delay: 0.08, ease: [0.32, 0, 0.18, 1] }}
           >
-            <AdminPortal allReports={reports} onAssignDept={handleAssignDept} onSetDeadline={handleSetDeadline} onClose={() => setPortalMode('none')} />
+            <AdminPortal allReports={reports} onAssignDept={handleAssignDept} onIgnoreReport={handleIgnoreReport} onSetDeadline={handleSetDeadline}
+              isDarkMode={isDarkMode} onToggleTheme={() => setIsDarkMode(prev => !prev)} onClose={() => setPortalMode('none')} />
           </motion.div>
         </div>
       </>
@@ -330,7 +339,6 @@ export default function App() {
       <>
         <SVHBackground />
         <div className="min-h-screen bg-background w-full mx-auto relative mobile-container overflow-y-auto">
-          {themeToggle}
           {/* Back button — lives inside the mobile container, sticky at top */}
           <motion.button
             onClick={() => setPortalMode('none')}
@@ -345,7 +353,8 @@ export default function App() {
             initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.38, delay: 0.08, ease: [0.32, 0, 0.18, 1] }}
           >
-            <StaffPortal allReports={reports} onStatusUpdate={handleStaffStatusUpdate} onResolveWithProof={handleStaffResolveWithProof} onClose={() => setPortalMode('none')} />
+            <StaffPortal allReports={reports} onStatusUpdate={handleStaffStatusUpdate} onResolveWithProof={handleStaffResolveWithProof}
+              isDarkMode={isDarkMode} onToggleTheme={() => setIsDarkMode(prev => !prev)} onClose={() => setPortalMode('none')} />
           </motion.div>
         </div>
       </>
@@ -405,8 +414,8 @@ export default function App() {
     );
   }
 
-  const districtReports = reports.filter(r => r.district === user.district);
-  const myReports       = reports.filter(r => r.userId === (user.id || user.email || 'guest'));
+  const districtReports = reports.filter(r => r.district === user.district && r.status !== 'ignored');
+  const myReports       = reports.filter(r => r.userId === (user.id || user.email || 'guest') && r.status !== 'ignored');
   const direction       = getDirection(prevScreen, currentScreen);
 
   return (

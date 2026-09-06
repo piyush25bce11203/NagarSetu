@@ -30,7 +30,7 @@ export interface Report {
   aiConfidence: number;
   // AI suggested department based on image/description analysis
   aiSuggestedDept?: string;
-  status: 'pending' | 'acknowledged' | 'submitted' | 'resolved';
+  status: 'pending' | 'acknowledged' | 'submitted' | 'resolved' | 'ignored';
   upvotes: number;
   comments: Comment[];
   severity: number;

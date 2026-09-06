@@ -4,8 +4,8 @@ import {
   Shield, LogIn, Eye, EyeOff, LogOut,
   BarChart3, MapPin, Clock, CheckCircle, AlertCircle,
   Filter, Search, X, TrendingUp, FileText, RefreshCw, Download, Send,
-  Building2, Calendar, Trophy, Star, Crown, Medal, Award,
-  PieChart, LineChart, Users, Target, Timer
+  Building2, Calendar, Trophy, Star, Crown, Medal, Award, Ban,
+  PieChart, LineChart, Users, Target, Timer, UserCircle, Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
@@ -14,6 +14,12 @@ import { Label } from './ui/label';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { ThemeToggle } from './ThemeToggle';
+import {
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell,
+  Pie, PieChart as RechartsPieChart, ResponsiveContainer,
+  Tooltip, XAxis, YAxis,
+} from 'recharts';
 import { ADMIN_ACCOUNTS, DEPARTMENTS, CITY_LIST } from '../data/mockReports';
 import type { Report } from '../App';
 
@@ -22,6 +28,7 @@ const statusConfig: Record<Report['status'], { label: string; color: string; dot
   acknowledged: { label: 'Acknowledged', color: 'bg-blue-100 text-blue-800',     dot: 'bg-blue-500'   },
   submitted:    { label: 'In Progress',  color: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-500' },
   resolved:     { label: 'Resolved',     color: 'bg-green-100 text-green-800',   dot: 'bg-green-500'  },
+  ignored:      { label: 'Ignored',      color: 'bg-gray-100 text-gray-700',     dot: 'bg-gray-500'   },
 };
 
 const priorityConfig: Record<string, { color: string }> = {
@@ -45,11 +52,58 @@ function fmtDeadline(iso: string) {
   return { label: `${dy}d left`, color: 'text-blue-600', overdue: false };
 }
 
+function AdminProfilePanel({
+  adminName, adminEmail, adminCity, isDarkMode, onToggleTheme,
+}: {
+  adminName: string;
+  adminEmail: string;
+  adminCity: string;
+  isDarkMode: boolean;
+  onToggleTheme: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl p-5 text-white shadow-sm" style={{ backgroundColor: '#0f172a' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center">
+            <Shield className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-emerald-300">Administrator profile</p>
+            <h2 className="text-xl font-bold mt-1">{adminName}</h2>
+            <p className="text-xs text-slate-300 mt-1">City administration account</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 divide-y shadow-sm">
+        <div className="p-4 flex items-center gap-3">
+          <UserCircle className="w-5 h-5 text-emerald-600" />
+          <div><p className="text-[11px] text-slate-500">Full name</p><p className="text-sm font-semibold text-slate-900">{adminName}</p></div>
+        </div>
+        <div className="p-4 flex items-center gap-3">
+          <Mail className="w-5 h-5 text-emerald-600" />
+          <div className="min-w-0"><p className="text-[11px] text-slate-500">Official email</p><p className="text-sm font-semibold text-slate-900 truncate">{adminEmail}</p></div>
+        </div>
+        <div className="p-4 flex items-center gap-3">
+          <Building2 className="w-5 h-5 text-emerald-600" />
+          <div><p className="text-[11px] text-slate-500">Assigned city</p><p className="text-sm font-semibold text-slate-900">{adminCity}</p></div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 flex items-center justify-between shadow-sm">
+        <div><p className="text-sm font-semibold text-slate-900">Appearance</p><p className="text-xs text-slate-500 mt-1">Use light or dark mode</p></div>
+        <div className="relative w-10 h-10"><ThemeToggle isDarkMode={isDarkMode} onToggle={onToggleTheme} /></div>
+      </div>
+    </div>
+  );
+}
+
 // ── City Ranking ──────────────────────────────────────────────────────────────
 function CityRankingPanel({ allReports }: { allReports: Report[] }) {
   const cityStats = useMemo(() => {
     return CITY_LIST.map(city => {
-      const cityR = allReports.filter(r => r.district === city);
+      const cityR = allReports.filter(r => r.district === city && r.status !== 'ignored');
       const total    = cityR.length;
       const resolved = cityR.filter(r => r.status === 'resolved').length;
       const overdue  = cityR.filter(r => r.deadline && new Date(r.deadline) < new Date() && r.status !== 'resolved').length;
@@ -169,6 +223,7 @@ function AnalyticsPanel({ cityReports, adminCity }: { cityReports: Report[]; adm
     return cityReports.filter(r => r.timestamp >= start && r.timestamp <= end).length;
   });
   const maxDay = Math.max(...dayCounts, 1);
+  const trendData = dayLabels.map((day, i) => ({ day, complaints: dayCounts[i] }));
 
   // Staff performance
   const staffPerf = DEPARTMENTS.map(dept => {
@@ -177,31 +232,36 @@ function AnalyticsPanel({ cityReports, adminCity }: { cityReports: Report[]; adm
     return { dept: dept.id, assigned, resolved: res };
   }).filter(d => d.assigned > 0);
   const maxAssigned = Math.max(...staffPerf.map(s => s.assigned), 1);
+  const statusChartData = statusData.map(s => ({
+    name: s.label,
+    value: s.value,
+    fill: s.label === 'Pending' ? '#ef4444' : s.label === 'Assigned' ? '#0ea5e9' : s.label === 'In Progress' ? '#f59e0b' : '#10b981',
+  }));
 
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-4 text-white">
+      <div className="rounded-2xl p-4 text-white shadow-sm" style={{ backgroundColor: '#0f172a' }}>
         <div className="flex items-center gap-2 mb-1">
           <BarChart3 className="w-5 h-5 text-emerald-400" />
           <h2 className="font-bold">Analytics Dashboard — {adminCity}</h2>
         </div>
-        <p className="text-xs text-slate-300">Visual overview of complaint data</p>
+        <p className="text-xs text-slate-300">Live operational view of complaint volume, status, and department workload</p>
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="flex flex-wrap gap-2">
         {[
           { label: 'Total Complaints', value: total,   icon: FileText,  color: 'text-slate-700', bg: 'bg-white'      },
           { label: 'Resolution Rate',  value: `${resRate}%`, icon: Target,   color: 'text-green-600', bg: 'bg-green-50'   },
           { label: 'In Progress',      value: inProg,  icon: RefreshCw, color: 'text-yellow-600', bg: 'bg-yellow-50'  },
           { label: 'Resolved',         value: resolved, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50'  },
         ].map(k => (
-          <div key={k.label} className={`${k.bg} rounded-xl border p-3 flex items-center gap-3`}>
-            <k.icon className={`w-5 h-5 ${k.color} flex-shrink-0`} />
+          <div key={k.label} className={`${k.bg} rounded-xl border px-3 py-2 flex-1 min-w-[140px] sm:min-w-0 flex items-center gap-2`}>
+            <k.icon className={`w-4 h-4 ${k.color} flex-shrink-0`} />
             <div>
-              <p className={`text-xl font-bold ${k.color}`}>{k.value}</p>
-              <p className="text-xs text-muted-foreground">{k.label}</p>
+              <p className={`text-lg leading-none font-bold ${k.color}`}>{k.value}</p>
+              <p className="text-[11px] leading-tight text-muted-foreground mt-1">{k.label}</p>
             </div>
           </div>
         ))}
@@ -242,80 +302,102 @@ function AnalyticsPanel({ cityReports, adminCity }: { cityReports: Report[]; adm
       </div>
 
       {/* Complaint Status Donut */}
-      <div className="bg-white rounded-xl border p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <PieChart className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold text-sm">Complaint Status Distribution</h3>
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center">
+            <PieChart className="w-4 h-4 text-sky-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm text-slate-900">Status mix</h3>
+            <p className="text-[11px] text-slate-500">Where the active queue stands</p>
+          </div>
         </div>
-        <div className="space-y-2">
-          {statusData.map(s => (
-            <div key={s.label} className="flex items-center gap-2">
-              <span className={`w-2.5 h-2.5 rounded-full ${s.color} flex-shrink-0`} />
-              <span className="text-xs text-gray-600 w-24">{s.label}</span>
-              <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
-                <motion.div className={`h-full ${s.color} rounded-full`}
-                  initial={{ width: 0 }} animate={{ width: `${total > 0 ? (s.value / total) * 100 : 0}%` }}
-                  transition={{ duration: 0.8, ease: 'easeOut' }} />
+        <div className="grid grid-cols-[150px_1fr] items-center gap-3">
+          <div className="" style={{ height: 144 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RechartsPieChart>
+                <Pie data={statusChartData} dataKey="value" nameKey="name" innerRadius={42} outerRadius={62} paddingAngle={3} stroke="none">
+                  {statusChartData.map(entry => <Cell key={entry.name} fill={entry.fill} />)}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }} />
+              </RechartsPieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-2">
+            {statusChartData.map(s => (
+              <div key={s.name} className="flex items-center gap-2 text-xs">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.fill }} />
+                <span className="text-slate-600 flex-1">{s.name}</span>
+                <span className="font-semibold text-slate-900">{s.value}</span>
               </div>
-              <span className={`text-xs font-bold w-6 text-right ${s.textColor}`}>{s.value}</span>
-            </div>
-          ))}
-          {statusData.length === 0 && <p className="text-xs text-center text-gray-400 py-4">No data yet</p>}
+            ))}
+            {statusChartData.length === 0 && <p className="text-xs text-center text-slate-400 py-4">No data yet</p>}
+          </div>
         </div>
       </div>
 
       {/* Complaints Over Time — 7-day bar graph */}
-      <div className="bg-white rounded-xl border p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <LineChart className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold text-sm">Complaints Over Time (Last 7 Days)</h3>
-        </div>
-        <div className="flex items-end gap-1 h-24">
-          {dayCounts.map((count, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-xs text-gray-500">{count}</span>
-              <motion.div className="w-full bg-blue-500 rounded-t"
-                initial={{ height: 0 }}
-                animate={{ height: `${maxDay > 0 ? (count / maxDay) * 64 : 0}px` }}
-                transition={{ duration: 0.6, delay: i * 0.05 }} />
-              <span className="text-xs text-gray-400">{dayLabels[i]}</span>
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <LineChart className="w-4 h-4 text-emerald-600" />
             </div>
-          ))}
+            <div>
+              <h3 className="font-semibold text-sm text-slate-900">Complaint activity</h3>
+              <p className="text-[11px] text-slate-500">Reported over the last 7 days</p>
+            </div>
+          </div>
+          <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full">Live trend</span>
+        </div>
+        <div className="-mx-2" style={{ height: 208 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={trendData} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+              <defs>
+                <linearGradient id="complaintTrendFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.28} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3" />
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} domain={[0, Math.max(maxDay, 1)]} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,.10)', fontSize: 12 }} />
+              <Area type="monotone" dataKey="complaints" stroke="#059669" strokeWidth={2.5} fill="url(#complaintTrendFill)" activeDot={{ r: 5, fill: '#059669', stroke: '#fff', strokeWidth: 2 }} />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
       {/* Complaints by Category / Department */}
       {categoryData.length > 0 && (
-        <div className="bg-white rounded-xl border p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <BarChart3 className="w-4 h-4 text-primary" />
-            <h3 className="font-semibold text-sm">Complaints by Department</h3>
-          </div>
-          <div className="space-y-2">
-            {categoryData.map(d => (
-              <div key={d.label} className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-700 w-16 flex-shrink-0">{d.label}</span>
-                <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden relative">
-                  <motion.div className="h-full bg-indigo-500 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(d.count / maxCount) * 100}%` }}
-                    transition={{ duration: 0.7, ease: 'easeOut' }} />
-                  {d.resolved > 0 && (
-                    <motion.div className="absolute top-0 left-0 h-full bg-green-500 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(d.resolved / maxCount) * 100}%` }}
-                      transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }} />
-                  )}
-                </div>
-                <span className="text-xs text-gray-500 w-14 text-right">
-                  {d.count} total · <span className="text-green-600">{d.resolved} ✓</span>
-                </span>
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                <BarChart3 className="w-4 h-4 text-indigo-600" />
               </div>
-            ))}
+              <div>
+                <h3 className="font-semibold text-sm text-slate-900">Department load</h3>
+                <p className="text-[11px] text-slate-500">Volume compared with resolved work</p>
+              </div>
+            </div>
+            <div className="flex gap-2 text-[10px] text-slate-500">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500" />Total</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" />Resolved</span>
+            </div>
           </div>
-          <div className="flex gap-3 mt-2 text-xs text-gray-500">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500" />Total</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" />Resolved</span>
+          <div className="-mx-2" style={{ height: 224 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={categoryData} margin={{ top: 8, right: 8, left: -24, bottom: 0 }} barGap={4}>
+                <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} domain={[0, Math.max(maxCount, 1)]} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,.10)', fontSize: 12 }} />
+                <Bar dataKey="count" name="Total" fill="#6366f1" radius={[5, 5, 0, 0]} />
+                <Bar dataKey="resolved" name="Resolved" fill="#10b981" radius={[5, 5, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}
@@ -493,12 +575,15 @@ function AdminLogin({ onLogin, onBackToApp }: { onLogin: (email: string, city: s
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 function AdminDashboard({
-  adminName, adminCity, allReports, onAssignDept, onSetDeadline, onLogout, onBackToApp,
+  adminName, adminEmail, adminCity, allReports, onAssignDept, onIgnoreReport, onSetDeadline, isDarkMode, onToggleTheme, onLogout, onBackToApp,
 }: {
-  adminName: string; adminCity: string;
+  adminName: string; adminEmail: string; adminCity: string;
   allReports: Report[];
   onAssignDept: (id: string, dept: string) => void;
+  onIgnoreReport: (id: string) => void;
   onSetDeadline: (id: string, deadline: string) => void;
+  isDarkMode: boolean;
+  onToggleTheme: () => void;
   onLogout: () => void;
   onBackToApp: () => void;
 }) {
@@ -506,8 +591,12 @@ function AdminDashboard({
     () => allReports.filter(r => r.district === adminCity),
     [allReports, adminCity]
   );
+  const activeCityReports = useMemo(
+    () => cityReports.filter(r => r.status !== 'ignored'),
+    [cityReports]
+  );
 
-  const [tab, setTab]                     = useState<'complaints' | 'analytics' | 'ranking'>('complaints');
+  const [tab, setTab]                     = useState<'complaints' | 'analytics' | 'ranking' | 'profile'>('complaints');
   const [search, setSearch]               = useState('');
   const [statusFilter, setStatusFilter]   = useState('all');
   const [typeFilter, setTypeFilter]       = useState('all');
@@ -517,14 +606,16 @@ function AdminDashboard({
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
 
   const stats = useMemo(() => ({
-    total:      cityReports.length,
-    pending:    cityReports.filter(r => r.status === 'pending').length,
-    inProgress: cityReports.filter(r => r.status === 'submitted' || r.status === 'acknowledged').length,
-    resolved:   cityReports.filter(r => r.status === 'resolved').length,
-    unassigned: cityReports.filter(r => !r.assignedDept).length,
-  }), [cityReports]);
+    total:      activeCityReports.length,
+    pending:    activeCityReports.filter(r => r.status === 'pending').length,
+    inProgress: activeCityReports.filter(r => r.status === 'submitted' || r.status === 'acknowledged').length,
+    resolved:   activeCityReports.filter(r => r.status === 'resolved').length,
+    unassigned: activeCityReports.filter(r => !r.assignedDept).length,
+  }), [activeCityReports]);
 
   const filtered = useMemo(() => cityReports.filter(r => {
+    if (statusFilter === 'ignored') return r.status === 'ignored';
+    if (r.status === 'ignored') return false;
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;
     if (typeFilter   !== 'all' && r.type.toLowerCase() !== typeFilter) return false;
     if (search && !`${r.title} ${r.ward} ${r.street}`.toLowerCase().includes(search.toLowerCase())) return false;
@@ -547,6 +638,12 @@ function AdminDashboard({
     setDetail(prev => prev ? { ...prev, deadline: iso } : prev);
     setShowDeadlinePicker(false);
     setDeadlineInput('');
+  };
+
+  const handleIgnore = (reportId: string) => {
+    onIgnoreReport(reportId);
+    setDetail(null);
+    setShowDeadlinePicker(false);
   };
 
   const handleExportCSV = () => {
@@ -597,6 +694,7 @@ function AdminDashboard({
             { id: 'complaints', label: 'Complaints',  icon: FileText  },
             { id: 'analytics',  label: 'Analytics',   icon: BarChart3  },
             { id: 'ranking',    label: 'City Ranking', icon: Trophy    },
+            { id: 'profile',    label: 'Profile',     icon: UserCircle },
           ] as const).map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold border-b-2 transition-colors ${
@@ -610,9 +708,14 @@ function AdminDashboard({
 
       <div className="p-4 space-y-4 max-w-5xl mx-auto">
 
+        {tab === 'profile' && (
+          <AdminProfilePanel adminName={adminName} adminEmail={adminEmail} adminCity={adminCity}
+            isDarkMode={isDarkMode} onToggleTheme={onToggleTheme} />
+        )}
+
         {/* ── ANALYTICS TAB ─────────────────────────────────────────────── */}
         {tab === 'analytics' && (
-          <AnalyticsPanel cityReports={cityReports} adminCity={adminCity} />
+          <AnalyticsPanel cityReports={activeCityReports} adminCity={adminCity} />
         )}
 
         {/* ── CITY RANKING TAB ──────────────────────────────────────────── */}
@@ -624,7 +727,7 @@ function AdminDashboard({
         {tab === 'complaints' && (
           <>
             {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="flex flex-wrap gap-2">
               {[
                 { label: 'Total',       v: stats.total,      color: 'text-slate-700', bg: 'bg-white',      icon: FileText    },
                 { label: 'Pending',     v: stats.pending,    color: 'text-red-600',   bg: 'bg-red-50',     icon: AlertCircle },
@@ -632,10 +735,12 @@ function AdminDashboard({
                 { label: 'Resolved',    v: stats.resolved,   color: 'text-green-600', bg: 'bg-green-50',   icon: CheckCircle },
                 { label: 'Unassigned',  v: stats.unassigned, color: 'text-orange-600',bg: 'bg-orange-50',  icon: TrendingUp  },
               ].map(s => (
-                <motion.div key={s.label} className={`${s.bg} rounded-xl border p-3 flex flex-col gap-1`} whileHover={{ scale: 1.02 }}>
-                  <s.icon className={`w-4 h-4 ${s.color}`} />
-                  <p className={`text-2xl font-bold ${s.color}`}>{s.v}</p>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                <motion.div key={s.label} className={`${s.bg} rounded-lg border px-3 py-2 flex-1 min-w-[140px] sm:min-w-0 flex items-center gap-2 min-h-[52px]`} whileHover={{ y: -1 }}>
+                  <s.icon className={`w-4 h-4 ${s.color} flex-shrink-0`} />
+                  <div className="min-w-0">
+                    <p className={`text-lg leading-none font-bold ${s.color}`}>{s.v}</p>
+                    <p className="text-[11px] leading-tight text-muted-foreground truncate mt-1">{s.label}</p>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -648,7 +753,7 @@ function AdminDashboard({
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {DEPARTMENTS.map(dept => {
-                  const deptReports = cityReports.filter(r => r.assignedDept === dept.id);
+                  const deptReports = activeCityReports.filter(r => r.assignedDept === dept.id);
                   const pending     = deptReports.filter(r => r.status !== 'resolved').length;
                   return (
                     <div key={dept.id} className="border rounded-xl p-2 text-center">
@@ -687,6 +792,7 @@ function AdminDashboard({
                     <SelectItem value="acknowledged" className="text-xs">Acknowledged</SelectItem>
                     <SelectItem value="submitted" className="text-xs">In Progress</SelectItem>
                     <SelectItem value="resolved" className="text-xs">Resolved</SelectItem>
+                    <SelectItem value="ignored" className="text-xs">Ignored / Removed</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -775,11 +881,11 @@ function AdminDashboard({
 
                     {/* Assign row */}
                     <div className="px-4 pb-4 pt-0 border-t mt-0 pt-3 flex items-center gap-2 flex-wrap" onClick={e => e.stopPropagation()}>
-                      <span className="text-xs text-muted-foreground font-medium whitespace-nowrap flex items-center gap-1">
+                      {report.status !== 'ignored' && <span className="text-xs text-muted-foreground font-medium whitespace-nowrap flex items-center gap-1">
                         <Send className="w-3 h-3" />Assign:
-                      </span>
+                      </span>}
                       <div className="flex gap-1 flex-wrap">
-                        {DEPARTMENTS.map(d => (
+                        {report.status !== 'ignored' && DEPARTMENTS.map(d => (
                           <button key={d.id} disabled={assigning === report.id}
                             onClick={() => handleAssign(report.id, d.id)}
                             className={`text-xs px-2 py-1 rounded-lg border transition-all font-medium ${
@@ -791,6 +897,11 @@ function AdminDashboard({
                           </button>
                         ))}
                       </div>
+                      {report.status !== 'ignored' && (
+                        <Button variant="outline" size="sm" onClick={() => handleIgnore(report.id)} className="h-8 text-xs font-semibold text-red-700 border-red-300 bg-red-50 hover:bg-red-100 gap-1">
+                          <Ban className="w-3.5 h-3.5" />Ignore / Fake
+                        </Button>
+                      )}
                     </div>
                   </motion.div>
                 );
@@ -878,6 +989,12 @@ function AdminDashboard({
                   )}
                 </div>
 
+                {detail.status !== 'ignored' && (
+                  <Button variant="outline" onClick={() => handleIgnore(detail.id)} className="w-full text-gray-700 border-gray-300 hover:bg-gray-100 gap-2">
+                    <Ban className="w-4 h-4" />Ignore as fake complaint
+                  </Button>
+                )}
+
                 {/* Info grid */}
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
@@ -902,7 +1019,7 @@ function AdminDashboard({
                 </div>
 
                 {/* ── Deadline section ───────────────────────────────────── */}
-                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 space-y-2">
+                {detail.status !== 'ignored' && <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Timer className="w-4 h-4 text-orange-600" />
@@ -938,10 +1055,10 @@ function AdminDashboard({
                       <Calendar className="w-3.5 h-3.5" />{detail.deadline ? 'Change Deadline' : 'Set Deadline'}
                     </Button>
                   )}
-                </div>
+                </div>}
 
                 {/* Assign / Re-assign department — always editable */}
-                <div>
+                {detail.status !== 'ignored' && <div>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       {detail.assignedDept ? 'Re-assign Department' : 'Assign Department'}
@@ -974,7 +1091,7 @@ function AdminDashboard({
                       </button>
                     ))}
                   </div>
-                </div>
+                </div>}
 
                 {/* Comments */}
                 {detail.comments.length > 0 && (
@@ -1006,18 +1123,22 @@ function AdminDashboard({
 interface AdminPortalProps {
   allReports: Report[];
   onAssignDept: (reportId: string, dept: string) => void;
+  onIgnoreReport: (reportId: string) => void;
   onSetDeadline: (reportId: string, deadline: string) => void;
+  isDarkMode: boolean;
+  onToggleTheme: () => void;
   onClose: () => void;
 }
 
-export function AdminPortal({ allReports, onAssignDept, onSetDeadline, onClose }: AdminPortalProps) {
+export function AdminPortal({ allReports, onAssignDept, onIgnoreReport, onSetDeadline, isDarkMode, onToggleTheme, onClose }: AdminPortalProps) {
   const [session, setSession] = useState<{ email: string; city: string; name: string } | null>(null);
 
   return (
     <div className="min-h-screen bg-background w-full relative overflow-y-auto">
       {session
-        ? <AdminDashboard adminName={session.name} adminCity={session.city} allReports={allReports}
-            onAssignDept={onAssignDept} onSetDeadline={onSetDeadline}
+        ? <AdminDashboard adminName={session.name} adminEmail={session.email} adminCity={session.city} allReports={allReports}
+            onAssignDept={onAssignDept} onIgnoreReport={onIgnoreReport} onSetDeadline={onSetDeadline}
+            isDarkMode={isDarkMode} onToggleTheme={onToggleTheme}
             onLogout={() => setSession(null)} onBackToApp={onClose} />
         : <AdminLogin onLogin={(_email, city, name) => setSession({ email: _email, city, name })} onBackToApp={onClose} />}
     </div>
