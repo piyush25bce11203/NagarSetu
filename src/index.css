@@ -414,6 +414,114 @@
   background: #21383a;
 }
 
+.citizen-faq {
+  border-color: rgba(15, 118, 110, 0.12);
+  box-shadow: 0 8px 24px rgba(15, 56, 48, 0.05);
+}
+
+.citizen-faq-intro {
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, #effaf6, #f1f8fc);
+  padding: 0.85rem;
+}
+
+.citizen-faq-icon {
+  display: flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.7rem;
+  background: #d6f5e9;
+  color: #087f6b;
+}
+
+.citizen-faq-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.citizen-faq-steps span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #4d6d68;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.citizen-faq-steps b {
+  display: inline-flex;
+  height: 1.25rem;
+  width: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #0f9d8a;
+  color: white;
+  font-size: 0.65rem;
+}
+
+.citizen-faq-item {
+  border-color: rgba(15, 118, 110, 0.1);
+}
+
+.dark .citizen-faq {
+  border-color: rgba(148, 183, 177, 0.18);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+}
+
+.dark .citizen-faq-intro {
+  background: linear-gradient(135deg, #153631, #132b32);
+}
+
+.dark .citizen-faq-icon {
+  background: rgba(52, 211, 153, 0.18);
+  color: #8ff0ca;
+}
+
+.dark .citizen-faq-steps span {
+  color: #a4bfba;
+}
+
+.dark .citizen-faq-item {
+  border-color: rgba(148, 183, 177, 0.16);
+}
+
+.profile-help-link {
+  border-color: rgba(13, 148, 136, 0.18);
+  background: linear-gradient(135deg, #f0fdf8, #f2f9fc);
+}
+
+.profile-help-link:hover {
+  border-color: rgba(13, 148, 136, 0.4);
+  box-shadow: 0 8px 18px rgba(15, 118, 110, 0.08);
+  transform: translateY(-1px);
+}
+
+.profile-help-icon {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.65rem;
+  background: #d6f5e9;
+  color: #087f6b;
+}
+
+.dark .profile-help-link {
+  border-color: rgba(110, 231, 183, 0.2);
+  background: linear-gradient(135deg, #153631, #132b32);
+}
+
+.dark .profile-help-icon {
+  background: rgba(52, 211, 153, 0.18);
+  color: #8ff0ca;
+}
+
 .loading-screen {
   position: relative;
   overflow: hidden;

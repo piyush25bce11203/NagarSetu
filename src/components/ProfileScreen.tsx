@@ -1,10 +1,12 @@
-import { Settings, Wifi, WifiOff, User, Languages, Clock, Star, Download, RotateCcw, Trophy, Zap, Shield, LogOut } from 'lucide-react';
+import { useState } from 'react';
+import { Settings, Wifi, WifiOff, User, Languages, Clock, Star, Download, RotateCcw, Trophy, Zap, Shield, LogOut, CircleHelp, Camera, MapPin, Route, CheckCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { motion } from 'motion/react';
 import { Report, User as UserType } from '../App';
 import { Language, getT } from './translations';
@@ -26,6 +28,57 @@ const languageOptions = [
   { value: 'hindi',   label: 'हिन्दी (Hindi)' },
 ];
 
+const citizenFaqs = [
+  {
+    id: 'report',
+    question: 'How do I report a civic issue?',
+    answer: 'Tap the central Report button, take a photo or choose one from your gallery, select the issue type, add a short description, confirm the location, and submit. A clear photo and specific landmark help the department respond faster.',
+    icon: Camera,
+  },
+  {
+    id: 'tracking',
+    question: 'How do I track my complaint?',
+    answer: 'Open Profile and select My Reports. Each complaint shows its current status, location, time, SLA countdown when available, and any resolution proof uploaded by staff.',
+    icon: Route,
+  },
+  {
+    id: 'status',
+    question: 'What do the complaint statuses mean?',
+    answer: 'Pending means the report is waiting for review. Acknowledged means a department has accepted it. In Progress means work has started. Resolved means staff completed the work and may have attached proof.',
+    icon: CheckCircle,
+  },
+  {
+    id: 'location',
+    question: 'Can I change the complaint location?',
+    answer: 'Yes. In the report form, tap Pin on map and move the marker to the exact problem location. You can also enter a street or landmark to help field staff find it.',
+    icon: MapPin,
+  },
+  {
+    id: 'ai',
+    question: 'How does the AI classification work?',
+    answer: 'NagarSetu uses your photo and description to suggest an issue type, severity, priority, and department. You can review the suggestion and change the issue type before submitting.',
+    icon: CircleHelp,
+  },
+  {
+    id: 'community',
+    question: 'What are upvotes and points for?',
+    answer: 'Upvotes show that other citizens support an issue and help highlight community impact. You earn points for submitting complaints and a bonus when an issue is resolved. City rankings are shown in Ranks.',
+    icon: Trophy,
+  },
+  {
+    id: 'privacy',
+    question: 'Where is my information stored?',
+    answer: 'This prototype stores accounts, sessions, reports, and theme preference in your browser storage. Photos used in reports are kept with the report data on this device.',
+    icon: Shield,
+  },
+  {
+    id: 'settings',
+    question: 'How do I change language, theme, or connectivity mode?',
+    answer: 'Use the Settings tab to change language and online mode. Use the sun or moon button at the top of the app to switch between light and dark themes. Your theme preference is remembered on this device.',
+    icon: Settings,
+  },
+];
+
 export function ProfileScreen({ 
   reports, 
   user, 
@@ -36,6 +89,7 @@ export function ProfileScreen({
   onLogout,
 }: ProfileScreenProps) {
   const t = getT(user.language);
+  const [activeTab, setActiveTab] = useState('settings');
 
   const getStatusColor = (status: Report['status']) => {
     switch (status) {
@@ -95,7 +149,6 @@ export function ProfileScreen({
     a.href = url;
     a.download = `certificate-${reportId}.txt`;
     document.body.appendChild(a);
-    a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   };
@@ -183,11 +236,15 @@ export function ProfileScreen({
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="settings" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="settings">Settings</TabsTrigger>
             <TabsTrigger value="reports">My Reports</TabsTrigger>
             <TabsTrigger value="tech">Tech Features</TabsTrigger>
+            <TabsTrigger value="faq">
+              <CircleHelp className="w-3.5 h-3.5" />
+              FAQ
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="settings" className="space-y-4 mt-4">
@@ -250,6 +307,21 @@ export function ProfileScreen({
                   <Shield className="w-4 h-4 flex-shrink-0" />
                   <span className="flex-1 text-left">City Admin Portal</span>
                   <span className="text-xs text-slate-400">admin.nagarsetu.gov.in</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('faq')}
+                  className="profile-help-link w-full flex items-center gap-3 text-left rounded-xl border px-3 py-3 transition-all"
+                >
+                  <span className="profile-help-icon">
+                    <CircleHelp className="w-4 h-4" />
+                  </span>
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold">Help &amp; FAQ</span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">Learn how to report and track an issue</span>
+                  </span>
+                  <span className="text-primary text-lg" aria-hidden="true">→</span>
                 </button>
               </div>
             </div>
@@ -390,6 +462,42 @@ export function ProfileScreen({
 
           <TabsContent value="tech" className="mt-4">
             <TechShowcase language={user.language} />
+          </TabsContent>
+
+          <TabsContent value="faq" className="mt-4">
+            <div className="citizen-faq bg-white rounded-lg border p-4">
+              <div className="citizen-faq-intro mb-3">
+                <div className="flex items-start gap-3">
+                  <div className="citizen-faq-icon">
+                    <CircleHelp className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">How NagarSetu works</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Quick answers for reporting, tracking, and resolving civic issues.</p>
+                  </div>
+                </div>
+                <div className="citizen-faq-steps mt-4">
+                  <span><b>1</b> Report</span>
+                  <span><b>2</b> Track</span>
+                  <span><b>3</b> Resolve</span>
+                </div>
+              </div>
+              <Accordion type="single" collapsible className="w-full">
+                {citizenFaqs.map(({ id, question, answer, icon: FaqIcon }) => (
+                  <AccordionItem value={id} key={id} className="citizen-faq-item">
+                    <AccordionTrigger className="hover:no-underline">
+                      <span className="flex items-center gap-2">
+                        <FaqIcon className="w-4 h-4 text-primary flex-shrink-0" />
+                        {question}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm leading-relaxed text-muted-foreground pl-6">
+                      {answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
