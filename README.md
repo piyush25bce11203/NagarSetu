@@ -29,7 +29,7 @@ NagarSetu lets citizens photograph and report civic problems (potholes, garbage 
 - **Leaderboard** — earn 100 pts per complaint, 50 bonus pts when resolved
 - **Light and dark mode** — persistent theme preference across the app
 - **Animated transitions** — polished screen changes and loading states
-- **Offline support** — reports saved locally and synced when back online
+- **Local persistence** — accounts, sessions, and reports are saved in browser storage
 
 ### For Admins (City Portal)
 - City-scoped dashboard (Indore / Ujjain / Bhopal)
@@ -42,6 +42,7 @@ NagarSetu lets citizens photograph and report civic problems (potholes, garbage 
 - Department-scoped complaint queue
 - Update complaint status: Pending → Acknowledged → In Progress → Resolved
 - Upload resolution proof from the gallery or device camera
+- View complaint location, deadlines, comments, and resolution proof
 
 ---
 
@@ -55,7 +56,7 @@ NagarSetu lets citizens photograph and report civic problems (potholes, garbage 
 | Components | Radix UI primitives + shadcn/ui pattern |
 | Animations | Motion (Framer Motion) |
 | Maps | Leaflet 1.9.4 + OpenStreetMap |
-| Charts | Recharts |
+| Charts | Recharts primitives + SVG trend visualizations |
 | Icons | Lucide React |
 | Forms | React Hook Form |
 | Notifications | Sonner |
@@ -82,6 +83,8 @@ src/
 │   ├── LoginScreen.tsx            # Citizen login
 │   ├── RegisterScreen.tsx         # New account registration
 │   ├── VoiceRecorder.tsx          # Voice-to-text for report description
+│   ├── LocationPicker.tsx          # Interactive report location selection
+│   ├── MiniMap.tsx                 # Compact complaint location map
 │   ├── translations.ts            # All UI strings in 5 languages
 │   ├── ThemeToggle.tsx            # Persistent light/dark mode control
 │   └── ui/                        # Reusable UI components (40+)
@@ -92,6 +95,8 @@ src/
 ├── types/                         # Shared TypeScript types
 └── styles/                        # Global CSS + map-specific CSS
 ```
+
+The app also includes animated loading states, screen transitions, responsive mobile navigation, and persistent light/dark theme selection.
 
 ---
 
